@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:background="#0B0B0B"
+    android:padding="24dp">
+
+    <!-- TOP SPACE -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="80dp"/>
+
+    <!-- LOGO -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="riide In"
+        android:textColor="#63B7C4"
+        android:textSize="42sp"
+        android:textStyle="bold"/>
+
+    <!-- SPACE -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="40dp"/>
+
+    <!-- TITLE -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Verification code"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"/>
+
+    <!-- SPACE -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="20dp"/>
+
+    <!-- OTP BOXES -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <EditText android:id="@+id/otp1" style="@style/otpBox"/>
+        <EditText android:id="@+id/otp2" style="@style/otpBox"/>
+        <EditText android:id="@+id/otp3" style="@style/otpBox"/>
+        <EditText android:id="@+id/otp4" style="@style/otpBox"/>
+        <EditText android:id="@+id/otp5" style="@style/otpBox"/>
+        <EditText android:id="@+id/otp6" style="@style/otpBox"/>
+
+    </LinearLayout>
+
+    <!-- SPACE -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="30dp"/>
+
+    <!-- VERIFY BUTTON (ROUNDED + FULL WIDTH) -->
+    <Button
+        android:id="@+id/verifyButton"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:text="Verify Now"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:background="@drawable/rounded_button"/>
+
+    <!-- SPACE -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="15dp"/>
+
+    <!-- ONE LINE TEXT -->
+    <TextView
+        android:id="@+id/resendText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Not received code? Send again"
+        android:textColor="#AAAAAA"
+        android:textSize="14sp"/>
+
+</LinearLayout>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item>
+        <bitmap
+            android:src="@drawable/map_background"
+            android:gravity="fill" />
+    </item>
+
+    <item>
+        <shape>
+            <solid android:color="#A61A1A1A" />
+        </shape>
+    </item>
+
+</layer-list>

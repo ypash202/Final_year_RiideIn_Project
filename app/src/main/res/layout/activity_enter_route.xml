@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.EnterRouteActivity">
+
+    <!-- Map background -->
+    <ImageView
+        android:id="@+id/mapBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/map_bg" />
+
+    <!-- Dark overlay -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#88000000" />
+
+    <!-- Back button -->
+    <ImageButton
+        android:id="@+id/backButton"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/round_dark_button_bg"
+        android:contentDescription="Back"
+        android:padding="10dp"
+        android:src="@drawable/ic_back_custom"
+        app:tint="@android:color/white" />
+
+    <!-- Close button -->
+    <ImageButton
+        android:id="@+id/closeButton"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_gravity="end"
+        android:layout_marginTop="18dp"
+        android:layout_marginEnd="18dp"
+        android:background="@drawable/round_dark_button_bg"
+        android:contentDescription="Close"
+        android:padding="10dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        app:tint="@android:color/white" />
+
+    <!-- Main route panel -->
+    <LinearLayout
+        android:id="@+id/routePanel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="96dp"
+        android:background="@drawable/enter_route_panel_bg"
+        android:orientation="vertical"
+        android:paddingStart="18dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="18dp">
+
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Enter your route"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/fromEditText"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/search_box_bg"
+            android:drawableStart="@drawable/dot"
+            android:drawablePadding="10dp"
+            android:hint="From"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="#8A8A8A"
+            app:tint="#63B7C4" />
+
+        <EditText
+            android:id="@+id/toEditText"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/search_box_bg"
+            android:drawableStart="@android:drawable/ic_menu_search"
+            android:drawablePadding="10dp"
+            android:hint="To"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="#8A8A8A"
+            app:tint="#63B7C4" />
+
+    </LinearLayout>
+
+</FrameLayout>
