@@ -69,4 +69,12 @@
     <string name="upload_citizenship_photo">Upload citizenship photo</string>
     <string name="choose_from_library">Choose from library</string>
     <string name="take_a_photo">Take a photo</string>
-</resources>
+    <string name="enter_licence_number_title">Enter liscence number</string>
+    <string name="enter_licence_number_subtitle">Provide your driver’s liscence number</string>
+    <string name="licence_number_hint">Enter licence number</string>
+    <string name="your_vehicle_type">Your vehicle type</string>
+    <string name="vehicle_type_hint">Enter vehicle type</string>
+    <string name="your_vehicle_number">Your vehicle number</string>
+    <string name="vehicle_number_hint">Enter vehicle number</string>
+    </resources>
+
