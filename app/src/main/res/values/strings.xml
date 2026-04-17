@@ -65,4 +65,8 @@
     <string name="search_here">Search here..</string>
     <string name="search_voice">Search voice</string>
     <string name="safety">Safety</string>
+    <string name="next">Next</string>
+    <string name="upload_citizenship_photo">Upload citizenship photo</string>
+    <string name="choose_from_library">Choose from library</string>
+    <string name="take_a_photo">Take a photo</string>
 </resources>

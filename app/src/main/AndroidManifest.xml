@@ -11,11 +11,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.RiideIn">
+
+        <activity
+            android:name=".activities.DriverCitizenshipUploadActivity"
+            android:exported="false" />
         <activity
             android:name=".activities.HistoryActivity"
             android:exported="false" />
         <activity
-            android:name=".activities.my_account"
+            android:name=".activities.MyAccountActivity"
             android:exported="false" />
         <activity
             android:name=".activities.settings"
@@ -41,7 +45,9 @@
         <activity
             android:name=".activities.VehicleSelectionActivity"
             android:exported="false" />
-        <activity android:name=".activities.EnterRouteActivity" />
+        <activity
+            android:name=".activities.EnterRouteActivity"
+            android:exported="false" />
         <activity
             android:name=".activities.OtpActivity"
             android:exported="false" />
@@ -55,18 +61,19 @@
             android:name=".activities.MainActivity"
             android:exported="false" />
         <activity
+            android:name=".activities.CustomerHomeActivity"
+            android:exported="false" />
+        <activity
             android:name=".activities.OnboardingActivity"
             android:exported="true">
-            <activity
-                android:name=".activities.CustomerHomeActivity"
-                android:exported="false" />
+
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

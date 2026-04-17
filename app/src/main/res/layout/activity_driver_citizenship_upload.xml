@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="28dp">
+
+        <!-- top buttons -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp">
+
+            <ImageButton
+                android:id="@+id/backButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/round_dark_button_bg"
+                android:contentDescription="@string/back"
+                android:padding="13dp"
+                android:src="@drawable/ic_back_custom"
+                app:tint="@android:color/white" />
+
+            <ImageButton
+                android:id="@+id/closeButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/round_dark_button_bg"
+                android:contentDescription="@string/close"
+                android:padding="13dp"
+                android:src="@drawable/ic_close_custom"
+                app:tint="@android:color/white" />
+        </RelativeLayout>
+
+        <!-- title -->
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="34dp"
+            android:text="@string/upload_citizenship_photo"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- choose from library -->
+        <LinearLayout
+            android:id="@+id/chooseLibraryCard"
+            android:layout_width="match_parent"
+            android:layout_height="173dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/driver_upload_card_bg"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/chooseLibraryText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/choose_from_library"
+                android:textColor="@android:color/white"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- take a photo -->
+
+        <LinearLayout
+            android:id="@+id/takePhotoCard"
+            android:layout_width="match_parent"
+            android:layout_height="188dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/driver_upload_card_bg"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp">
+
+            <TextView
+                android:id="@+id/takePhotoText"
+                android:layout_width="108dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/take_a_photo"
+                android:textColor="@android:color/white"
+                android:textSize="16sp" />
+
+            <ImageView
+                android:id="@+id/cameraIcon"
+                android:layout_width="54dp"
+                android:layout_height="54dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_camera_custom"
+                app:tint="@android:color/white" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- next button -->
+        <Button
+            android:id="@+id/nextButton"
+            android:layout_width="344dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/driver_mode_button_bg"
+            android:text="@string/next"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</FrameLayout>
