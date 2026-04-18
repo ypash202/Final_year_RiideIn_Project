@@ -81,5 +81,8 @@
     <string name="verification_complete">Verification Complete</string>
     <string name="driver_verification_message">You are now registered as a driver.\nGo online to start your riding journey!</string>
     <string name="go_online">Go Online</string>
+    <string name="driver_rating">5.0</string>
+    <string name="customer_mode">Customer mode</string>
+    <string name="driver_profile_photo">Driver profile photo</string>
 </resources>
 
