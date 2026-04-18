@@ -97,5 +97,8 @@
     <string name="sample_dropoff">Trade Tower,Thapathali</string>
     <string name="accept">Accept</string>
     <string name="decline">Decline</string>
+    <string name="new_ride_request">New ride request</string>
+    <string name="navigate">Navigate</string>
+
 </resources>
 
