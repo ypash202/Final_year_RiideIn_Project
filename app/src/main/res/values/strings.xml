@@ -89,5 +89,13 @@
     <string name="delivery">Delivery</string>
     <string name="you_re_offline">You’re offline</string>
     <string name="messages">Messages</string>
+    <string name="you_re_online">You’re online</string>
+    <string name="rider_profile_photo">Rider profile photo</string>
+    <string name="sample_rider_name">Ram Gurung</string>
+    <string name="sample_fare">NPR 200</string>
+    <string name="sample_pickup">Boudha</string>
+    <string name="sample_dropoff">Trade Tower,Thapathali</string>
+    <string name="accept">Accept</string>
+    <string name="decline">Decline</string>
 </resources>
 
