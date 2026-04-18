@@ -84,5 +84,10 @@
     <string name="driver_rating">5.0</string>
     <string name="customer_mode">Customer mode</string>
     <string name="driver_profile_photo">Driver profile photo</string>
+    <string name="moto">Moto</string>
+    <string name="cab">cab</string>
+    <string name="delivery">Delivery</string>
+    <string name="you_re_offline">You’re offline</string>
+    <string name="messages">Messages</string>
 </resources>
 
