@@ -76,5 +76,8 @@
     <string name="vehicle_type_hint">Enter vehicle type</string>
     <string name="your_vehicle_number">Your vehicle number</string>
     <string name="vehicle_number_hint">Enter vehicle number</string>
-    </resources>
+    <string name="upload_your_photo">Upload your photo</string>
+    <string name="take_a_clear_photo_of_yourself">Take a clear photo of yourself</string>
+
+</resources>
 
