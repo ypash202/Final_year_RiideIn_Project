@@ -78,6 +78,8 @@
     <string name="vehicle_number_hint">Enter vehicle number</string>
     <string name="upload_your_photo">Upload your photo</string>
     <string name="take_a_clear_photo_of_yourself">Take a clear photo of yourself</string>
-
+    <string name="verification_complete">Verification Complete</string>
+    <string name="driver_verification_message">You are now registered as a driver.\nGo online to start your riding journey!</string>
+    <string name="go_online">Go Online</string>
 </resources>
 
