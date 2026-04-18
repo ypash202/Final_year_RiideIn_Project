@@ -170,7 +170,7 @@
 
             <Button
                 android:id="@+id/navigateButton"
-                android:layout_width="285dp"
+                android:layout_width="357dp"
                 android:layout_height="52dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="34dp"
