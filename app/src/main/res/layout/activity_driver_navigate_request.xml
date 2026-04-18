@@ -23,49 +23,42 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- top black header -->
-        <LinearLayout
-            android:id="@+id/topHeader"
-            android:layout_width="match_parent"
-            android:layout_height="92dp"
-            android:layout_alignParentTop="true"
-            android:background="#000000"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp">
+        <ImageButton
+            android:id="@+id/backButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="36dp"
+            android:background="@drawable/round_dark_button_bg"
+            android:contentDescription="@string/back"
+            android:padding="13dp"
+            android:src="@drawable/ic_back_custom"
+            app:tint="@android:color/white" />
 
-            <ImageButton
-                android:id="@+id/backButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/round_dark_button_bg"
-                android:contentDescription="@string/back"
-                android:padding="13dp"
-                android:src="@drawable/ic_back_custom"
-                app:tint="@android:color/white" />
+        <ImageButton
+            android:id="@+id/closeButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="36dp"
+            android:layout_marginEnd="24dp"
+            android:background="@drawable/round_dark_button_bg"
+            android:contentDescription="@string/close"
+            android:padding="13dp"
+            android:src="@drawable/ic_close_custom"
+            app:tint="@android:color/white" />
 
-            <TextView
-                android:id="@+id/titleText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="@string/new_ride_request"
-                android:textColor="@android:color/white"
-                android:textSize="21sp"
-                android:textStyle="bold" />
-
-            <ImageButton
-                android:id="@+id/closeButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/round_dark_button_bg"
-                android:contentDescription="@string/close"
-                android:padding="13dp"
-                android:src="@drawable/ic_close_custom"
-                app:tint="@android:color/white" />
-        </LinearLayout>
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/backButton"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:text="@string/new_ride_request"
+            android:textColor="@android:color/white"
+            android:textSize="21sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:id="@+id/requestCard"
@@ -153,10 +146,10 @@
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
                     android:contentDescription="@null"
-                    android:src="@drawable/dropoff_pin_bg" />
+                    android:src="@drawable/ic_location_pin_pink" />
 
                 <TextView
                     android:id="@+id/dropoffText"
