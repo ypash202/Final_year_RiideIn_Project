@@ -6,18 +6,14 @@
     android:layout_height="match_parent"
     tools:context=".activities.CustomerHomeActivity">
 
-    <ImageView
-        android:id="@+id/mapBackground"
+    <WebView
+        android:id="@+id/mapWebView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:contentDescription="@null"
-        android:scaleType="centerCrop"
-        android:src="@drawable/map_bg" />
-
+        android:layout_height="match_parent" />
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#88000000" />
+        android:background="#99000000" />
 
     <ImageButton
         android:id="@+id/backButton"
@@ -131,7 +127,11 @@
                 android:layout_height="wrap_content"
                 android:text="@string/driver_located_near_you"
                 android:textColor="@android:color/white"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+
         </LinearLayout>
     </LinearLayout>
 

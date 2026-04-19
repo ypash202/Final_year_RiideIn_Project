@@ -2,6 +2,10 @@ package com.riidein.app.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
@@ -23,11 +27,14 @@ class CustomerHomeActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
+        val mapWebView = findViewById<WebView>(R.id.mapWebView)
         val backButton = findViewById<ImageButton>(R.id.backButton)
         val closeButton = findViewById<ImageButton>(R.id.closeButton)
         val searchBox = findViewById<TextView>(R.id.searchBox)
         val promoButton = findViewById<Button>(R.id.promoButton)
         val locationButton = findViewById<ImageButton>(R.id.locationButton)
+
+        setupMapWebView(mapWebView)
 
         backButton.setOnClickListener {
             finish()
@@ -52,6 +59,23 @@ class CustomerHomeActivity : AppCompatActivity() {
         loadCustomerName()
     }
 
+    private fun setupMapWebView(webView: WebView) {
+        webView.webViewClient = WebViewClient()
+        webView.webChromeClient = WebChromeClient()
+
+        val webSettings = webView.settings
+        webSettings.javaScriptEnabled = true
+        webSettings.domStorageEnabled = true
+        webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+        webSettings.allowFileAccess = true
+        webSettings.allowContentAccess = true
+        webSettings.loadsImagesAutomatically = true
+        webSettings.useWideViewPort = true
+        webSettings.loadWithOverviewMode = true
+
+        webView.loadUrl("file:///android_asset/map.html")
+    }
+
     private fun loadCustomerName() {
         val currentUser = auth.currentUser ?: return
         val uid = currentUser.uid
@@ -69,5 +93,14 @@ class CustomerHomeActivity : AppCompatActivity() {
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to load customer name", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    override fun onBackPressed() {
+        val mapWebView = findViewById<WebView>(R.id.mapWebView)
+        if (mapWebView.canGoBack()) {
+            mapWebView.goBack()
+        } else {
+            super.onBackPressed()
+        }
     }
 }
