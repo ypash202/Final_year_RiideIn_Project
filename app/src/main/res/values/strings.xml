@@ -98,7 +98,13 @@
     <string name="accept">Accept</string>
     <string name="decline">Decline</string>
     <string name="new_ride_request">New ride request</string>
+    <string name="bike_image">Bike image</string>
+    <string name="ram_gurung">Ram Gurung</string>
+    <string name="npr_200">NPR 200</string>
+    <string name="boudha">Boudha</string>
+    <string name="trade_tower_thapathali">Trade Tower, Thapathali</string>
     <string name="navigate">Navigate</string>
+    <string name="arrived">Arrived</string>
 
 </resources>
 
