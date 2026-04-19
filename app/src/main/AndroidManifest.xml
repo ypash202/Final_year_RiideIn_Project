@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RiideIn">
         <activity
+            android:name=".activities.RideCompleteActivity"
+            android:exported="false" />
+        <activity
             android:name=".activities.DriverArrivedNavigateActivity"
             android:exported="false" />
         <activity

@@ -105,6 +105,10 @@
     <string name="trade_tower_thapathali">Trade Tower, Thapathali</string>
     <string name="navigate">Navigate</string>
     <string name="arrived">Arrived</string>
+    <string name="ride_complete">Ride complete</string>
+    <string name="complete">Complete</string>
+    <string name="time_30min">Time: 30min</string>
+    <string name="distance_23km">Distance: 2.3km</string>
 
 </resources>
 
