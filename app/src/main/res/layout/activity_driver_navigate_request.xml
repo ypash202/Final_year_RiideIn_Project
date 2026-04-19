@@ -23,7 +23,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- top black header -->
         <LinearLayout
             android:id="@+id/topHeader"
             android:layout_width="match_parent"
@@ -170,14 +169,13 @@
 
             <Button
                 android:id="@+id/navigateButton"
-                android:layout_width="357dp"
+                android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="34dp"
                 android:background="@drawable/driver_mode_button_bg"
                 android:text="@string/navigate"
                 android:textAllCaps="false"
-                android:textColor="@android:color/white"
+                android:textColor="#FFFFFF"
                 android:textSize="17sp" />
 
         </LinearLayout>

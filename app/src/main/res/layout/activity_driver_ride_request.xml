@@ -148,7 +148,7 @@
                     android:layout_width="18dp"
                     android:layout_height="18dp"
                     android:contentDescription="@null"
-                    android:src="@drawable/dropoff_pin_bg" />
+                    android:src="@drawable/ic_drop_pin" />
 
                 <TextView
                     android:id="@+id/dropoffText"
