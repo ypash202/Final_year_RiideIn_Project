@@ -23,7 +23,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Top header -->
         <LinearLayout
             android:id="@+id/topHeader"
             android:layout_width="match_parent"
@@ -37,11 +36,11 @@
 
             <ImageButton
                 android:id="@+id/backButton"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@android:color/transparent"
                 android:contentDescription="@string/back"
-                android:padding="10dp"
+                android:padding="12dp"
                 android:src="@drawable/ic_back_custom"
                 app:tint="@android:color/white" />
 
@@ -82,16 +81,15 @@
 
             <ImageButton
                 android:id="@+id/menuButton"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@android:color/transparent"
                 android:contentDescription="@string/menu"
-                android:padding="8dp"
+                android:padding="12dp"
                 android:src="@android:drawable/ic_menu_sort_by_size"
                 app:tint="@android:color/white" />
         </LinearLayout>
 
-        <!-- Content card -->
         <LinearLayout
             android:id="@+id/contentCard"
             android:layout_width="match_parent"
@@ -218,9 +216,9 @@
                 android:id="@+id/completeRideButton"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="20dp"
                 android:layout_marginTop="28dp"
-                android:layout_marginEnd="6dp"
+                android:layout_marginEnd="20dp"
                 android:background="@drawable/driver_mode_button_bg"
                 android:text="@string/complete_ride"
                 android:textAllCaps="false"
@@ -228,7 +226,6 @@
                 android:textSize="17sp" />
         </LinearLayout>
 
-        <!-- Bottom nav -->
         <LinearLayout
             android:id="@+id/bottomNav"
             android:layout_width="match_parent"
