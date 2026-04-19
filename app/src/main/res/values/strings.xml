@@ -111,6 +111,13 @@
     <string name="time_30min">Time: 30min</string>
     <string name="distance_23km">Distance: 2.3km</string>
     <string name="complete_ride">Complete ride</string>
-
+    <string name="enter_your_route">Enter your route</string>
+    <string name="from">From</string>
+    <string name="to">To</string>
+    <string name="search_destination">Where are you going?</string>
+    <string name="promo">Promo</string>
+    <string name="location">Location</string>
+    <string name="driver_located_near_you">Driver located near you</string>
+    <string name="apply_promo_code">Apply Promo Code</string>
 </resources>
 

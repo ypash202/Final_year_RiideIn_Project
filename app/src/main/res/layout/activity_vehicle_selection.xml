@@ -10,6 +10,7 @@
         android:id="@+id/mapBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:contentDescription="@null"
         android:scaleType="centerCrop"
         android:src="@drawable/map_bg" />
 
@@ -40,15 +41,18 @@
             <ImageView
                 android:layout_width="14dp"
                 android:layout_height="14dp"
+                android:contentDescription="@null"
                 android:src="@drawable/dot" />
 
             <TextView
+                android:id="@+id/fromLocationText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
-                android:text="Bouddha stupo"
+                android:text=""
                 android:textColor="#BDBDBD"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                tools:text="Boudha" />
         </LinearLayout>
 
         <LinearLayout
@@ -61,15 +65,18 @@
             <ImageView
                 android:layout_width="14dp"
                 android:layout_height="14dp"
+                android:contentDescription="@null"
                 android:src="@drawable/pink_dot" />
 
             <TextView
+                android:id="@+id/toLocationText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
-                android:text="Thapathali"
+                android:text=""
                 android:textColor="#BDBDBD"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                tools:text="Chabahil" />
         </LinearLayout>
     </LinearLayout>
 
@@ -84,6 +91,7 @@
             android:layout_width="15dp"
             android:layout_height="15dp"
             android:layout_gravity="center"
+            android:contentDescription="@null"
             android:rotation="15"
             android:src="@drawable/ic_send_custom"
             app:tint="#63B7C4" />
@@ -94,6 +102,7 @@
         android:layout_height="144dp"
         android:layout_marginStart="188dp"
         android:layout_marginTop="142dp"
+        android:contentDescription="@null"
         android:src="@drawable/route_line_overlay" />
 
     <FrameLayout
@@ -140,19 +149,22 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/customerNameText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pash"
+                android:text=""
                 android:textColor="@android:color/white"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="Pash"
+            />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Driver located near you"
                 android:textColor="@android:color/white"
-                android:textSize="8sp" />
+                android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -179,6 +191,7 @@
             <ImageView
                 android:layout_width="60dp"
                 android:layout_height="60dp"
+                android:contentDescription="@null"
                 android:src="@drawable/bike" />
 
             <LinearLayout
@@ -193,7 +206,7 @@
                     android:layout_height="wrap_content"
                     android:text="Near by you"
                     android:textColor="#8A8A8A"
-                    android:textSize="12sp" />
+                    android:textSize="13sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -240,6 +253,7 @@
             <ImageView
                 android:layout_width="60dp"
                 android:layout_height="60dp"
+                android:contentDescription="@null"
                 android:src="@drawable/car" />
 
             <LinearLayout
