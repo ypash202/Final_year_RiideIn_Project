@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".activities.CancelRideActivity">
 
-    <!-- Map background -->
     <ImageView
         android:id="@+id/mapBackground"
         android:layout_width="match_parent"
@@ -15,13 +14,11 @@
         android:scaleType="centerCrop"
         android:src="@drawable/map_bg" />
 
-    <!-- Dark overlay -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#88000000" />
 
-    <!-- Back button -->
     <ImageButton
         android:id="@+id/backButton"
         android:layout_width="48dp"
@@ -30,11 +27,10 @@
         android:layout_marginTop="18dp"
         android:background="@drawable/round_dark_button_bg"
         android:contentDescription="@string/back"
-        android:padding="12dp"
+        android:padding="10dp"
         android:src="@drawable/ic_back_custom"
         app:tint="@android:color/white" />
 
-    <!-- Close button -->
     <ImageButton
         android:id="@+id/closeButton"
         android:layout_width="48dp"
@@ -44,11 +40,10 @@
         android:layout_marginEnd="18dp"
         android:background="@drawable/round_dark_button_bg"
         android:contentDescription="@string/close"
-        android:padding="12dp"
+        android:padding="10dp"
         android:src="@android:drawable/ic_menu_close_clear_cancel"
         app:tint="@android:color/white" />
 
-    <!-- Main bottom sheet -->
     <LinearLayout
         android:id="@+id/trackingPanel"
         android:layout_width="match_parent"
@@ -61,7 +56,6 @@
         android:paddingEnd="18dp"
         android:paddingBottom="22dp">
 
-        <!-- Title -->
         <TextView
             android:id="@+id/arrivalTitle"
             android:layout_width="wrap_content"
@@ -71,7 +65,6 @@
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <!-- Driver row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -120,7 +113,6 @@
                 android:src="@drawable/bike" />
         </LinearLayout>
 
-        <!-- Cancel reason card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -153,10 +145,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:button="@null"
+                    android:maxWidth="260dp"
                     android:minHeight="48dp"
                     android:minWidth="48dp"
                     android:paddingTop="12dp"
                     android:paddingBottom="12dp"
+                    android:singleLine="false"
                     android:text="@string/reason_no_need_ride"
                     android:textColor="@android:color/white"
                     android:textSize="14sp" />
@@ -166,10 +160,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:button="@null"
+                    android:maxWidth="260dp"
                     android:minHeight="48dp"
                     android:minWidth="48dp"
                     android:paddingTop="12dp"
                     android:paddingBottom="12dp"
+                    android:singleLine="false"
                     android:text="@string/reason_need_changes"
                     android:textColor="@android:color/white"
                     android:textSize="14sp" />
@@ -179,10 +175,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:button="@null"
+                    android:maxWidth="260dp"
                     android:minHeight="48dp"
                     android:minWidth="48dp"
                     android:paddingTop="12dp"
                     android:paddingBottom="12dp"
+                    android:singleLine="false"
                     android:text="@string/reason_driver_late"
                     android:textColor="@android:color/white"
                     android:textSize="14sp" />
@@ -192,10 +190,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:button="@null"
+                    android:maxWidth="260dp"
                     android:minHeight="48dp"
                     android:minWidth="48dp"
                     android:paddingTop="12dp"
                     android:paddingBottom="12dp"
+                    android:singleLine="false"
                     android:text="@string/reason_driver_cancel"
                     android:textColor="@android:color/white"
                     android:textSize="14sp" />
@@ -205,10 +205,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:button="@null"
+                    android:maxWidth="260dp"
                     android:minHeight="48dp"
                     android:minWidth="48dp"
                     android:paddingTop="12dp"
                     android:paddingBottom="12dp"
+                    android:singleLine="false"
                     android:text="@string/reason_app_issue"
                     android:textColor="@android:color/white"
                     android:textSize="14sp" />
@@ -218,10 +220,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:button="@null"
+                    android:maxWidth="260dp"
                     android:minHeight="48dp"
                     android:minWidth="48dp"
                     android:paddingTop="12dp"
                     android:paddingBottom="12dp"
+                    android:singleLine="false"
                     android:text="@string/reason_other"
                     android:textColor="@android:color/white"
                     android:textSize="14sp" />
@@ -231,12 +235,14 @@
                 android:id="@+id/continueRideButton"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="18dp"
+                android:maxWidth="260dp"
                 android:minHeight="48dp"
                 android:background="@drawable/continue_ride_button_bg"
-                android:text="@string/continue_ride"
+                android:text="@string/cancel_ride_button"
                 android:textAllCaps="false"
-                android:textColor="@android:color/white"
+                android:textColor="#000000"
                 android:textSize="14sp" />
         </LinearLayout>
 
