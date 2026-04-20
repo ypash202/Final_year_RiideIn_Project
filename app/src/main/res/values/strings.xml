@@ -172,5 +172,6 @@
     <string name="okay_wait">Okay, I will wait.</string>
     <string name="send">Send</string>
     <string name="chat_seen_time">✓✓ 3:00PM</string>
+    <string name="call_driver">Call Driver</string>
 </resources>
 

@@ -84,6 +84,18 @@
                         android:background="@drawable/dot" />
                 </LinearLayout>
             </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/callButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/round_dark_button_bg"
+                android:contentDescription="@string/call_driver"
+                android:padding="10dp"
+                android:src="@android:drawable/ic_menu_call"
+                app:tint="@android:color/white" />
         </RelativeLayout>
 
         <View
@@ -94,6 +106,7 @@
             android:background="#1FFFFFFF" />
 
         <ScrollView
+            android:id="@+id/chatScrollView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -101,6 +114,7 @@
             android:scrollbars="none">
 
             <LinearLayout
+                android:id="@+id/chatContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
@@ -270,6 +284,7 @@
                 android:textSize="16sp" />
 
             <ImageButton
+                android:id="@+id/sendButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="12dp"
@@ -278,14 +293,6 @@
                 android:padding="6dp"
                 android:src="@drawable/ic_send_custom" />
 
-            <ImageButton
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="12dp"
-                android:background="@drawable/mic_circle_bg"
-                android:contentDescription="@string/mic"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_btn_speak_now" />
         </LinearLayout>
 
     </LinearLayout>
