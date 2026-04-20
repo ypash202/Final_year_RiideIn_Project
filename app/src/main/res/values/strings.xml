@@ -142,5 +142,35 @@
     <string name="price_rs_280">Rs 280</string>
     <string name="price_rs_400">Rs 400</string>
     <string name="find_a_driver">Find a driver</string>
+    <string name="contact_driver">Contact driver</string>
+    <string name="payment">Payment</string>
+    <string name="cash">Cash</string>
+    <string name="pickup_location">Pickup location</string>
+    <string name="drop_location">Drop location</string>
+    <string name="cancel_ride">✕ Cancel ride</string>
+    <string name="selected_vehicle">Selected vehicle</string>
+
+    <string name="driver_vehicle_honda">MOTOR -BIKE Honda</string>
+    <string name="payment_npr_200">NPR 200</string>
+    <string name="pickup_boudha">Boudha</string>
+    <string name="drop_trade_tower_thapathali">Trade Tower,Thapathali</string>
+
+    <string name="message_count_one">1</string>
+    <string name="message_now">now</string>
+    <string name="driver_name_binod">Binod</string>
+    <string name="driver_name_sulav">Sulav</string>
+    <string name="message_on_the_way">I am on the way.</string>
+    <string name="message_near_location">I am near your location.</string>
+
+    <string name="message_parcel_received">I\'m sending you a parcel receipt..</string>
+    <string name="active_now">Active Now</string>
+    <string name="attach">Attach</string>
+    <string name="chat_driver_arriving_soon">I am arriving soon.</string>
+    <string name="chat_driver_near_location">I am near your location.</string>
+    <string name="mic">Mic</string>
+    <string name="okay_short">Okay!</string>
+    <string name="okay_wait">Okay, I will wait.</string>
+    <string name="send">Send</string>
+    <string name="chat_seen_time">✓✓ 3:00PM</string>
 </resources>
 

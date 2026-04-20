@@ -6,48 +6,44 @@
     android:layout_height="match_parent"
     tools:context=".activities.RideTrackingActivity">
 
-    <!-- Map background -->
     <ImageView
         android:id="@+id/mapBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:contentDescription="@null"
         android:scaleType="centerCrop"
         android:src="@drawable/map_bg" />
 
-    <!-- Dark overlay -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#88000000" />
 
-    <!-- Back button -->
     <ImageButton
         android:id="@+id/backButton"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginStart="18dp"
         android:layout_marginTop="18dp"
         android:background="@drawable/round_dark_button_bg"
-        android:contentDescription="Back"
-        android:padding="10dp"
+        android:contentDescription="@string/back"
+        android:padding="12dp"
         android:src="@drawable/ic_back_custom"
         app:tint="@android:color/white" />
 
-    <!-- Close button -->
     <ImageButton
         android:id="@+id/closeButton"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_gravity="end"
         android:layout_marginTop="18dp"
         android:layout_marginEnd="18dp"
         android:background="@drawable/round_dark_button_bg"
-        android:contentDescription="Close"
-        android:padding="10dp"
+        android:contentDescription="@string/close"
+        android:padding="12dp"
         android:src="@android:drawable/ic_menu_close_clear_cancel"
         app:tint="@android:color/white" />
 
-    <!-- Main bottom sheet -->
     <LinearLayout
         android:id="@+id/trackingPanel"
         android:layout_width="match_parent"
@@ -60,17 +56,15 @@
         android:paddingEnd="18dp"
         android:paddingBottom="22dp">
 
-        <!-- Title -->
         <TextView
             android:id="@+id/arrivalTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Driver is arriving in 1 min"
+            android:text="@string/driver_arriving_1_min"
             android:textColor="@android:color/white"
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <!-- Driver row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -79,8 +73,10 @@
             android:orientation="horizontal">
 
             <ImageView
+                android:id="@+id/driverProfileImage"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
+                android:contentDescription="@string/driver_profile"
                 android:src="@drawable/profile1" />
 
             <LinearLayout
@@ -91,39 +87,48 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/driverNameText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Binod"
+                    android:text="@string/driver_name_binod"
                     android:textColor="@android:color/white"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/driverVehicleText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="MOTOR -BIKE Honda"
+                    android:text="@string/driver_vehicle_honda"
                     android:textColor="@android:color/white"
                     android:textSize="13sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
             <ImageView
+                android:id="@+id/vehicleImage"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:contentDescription="@string/selected_vehicle"
                 android:src="@drawable/bike" />
         </LinearLayout>
 
-        <!-- Contact driver -->
         <LinearLayout
+            android:id="@+id/contactDriverRow"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="34dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="28dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingEnd="8dp">
 
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
+                android:contentDescription="@string/contact_driver"
                 android:src="@drawable/contact_icon"
                 app:tint="#63B7C4" />
 
@@ -131,18 +136,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:text="Contact driver"
+                android:text="@string/contact_driver"
                 android:textColor="@android:color/white"
                 android:textSize="15sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Payment -->
         <TextView
+            android:id="@+id/paymentLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:text="Payment"
+            android:layout_marginTop="24dp"
+            android:text="@string/payment"
             android:textColor="#8A8A8A"
             android:textSize="14sp" />
 
@@ -153,22 +158,23 @@
             android:orientation="horizontal">
 
             <TextView
+                android:id="@+id/paymentAmountText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="NPR 200"
+                android:text="@string/payment_npr_200"
                 android:textColor="@android:color/white"
                 android:textSize="15sp" />
 
             <TextView
+                android:id="@+id/paymentMethodText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="18dp"
-                android:text="Cash"
+                android:text="@string/cash"
                 android:textColor="#BDBDBD"
                 android:textSize="15sp" />
         </LinearLayout>
 
-        <!-- Pickup -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -179,18 +185,19 @@
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
+                android:contentDescription="@string/pickup_location"
                 android:src="@drawable/dot" />
 
             <TextView
+                android:id="@+id/pickupLocationText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:text="Boudha"
+                android:text="@string/pickup_boudha"
                 android:textColor="@android:color/white"
                 android:textSize="15sp" />
         </LinearLayout>
 
-        <!-- Drop -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -201,18 +208,19 @@
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
+                android:contentDescription="@string/drop_location"
                 android:src="@drawable/pink_dot" />
 
             <TextView
+                android:id="@+id/dropLocationText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:text="Trade Tower,Thapathali"
+                android:text="@string/drop_trade_tower_thapathali"
                 android:textColor="@android:color/white"
                 android:textSize="15sp" />
         </LinearLayout>
 
-        <!-- Cancel row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -222,10 +230,10 @@
 
             <Button
                 android:id="@+id/cancelRideButton"
-                android:layout_width="130dp"
-                android:layout_height="38dp"
+                android:layout_width="140dp"
+                android:layout_height="48dp"
                 android:background="@drawable/cancel_request_button_bg"
-                android:text="✕ Cancel ride"
+                android:text="@string/cancel_ride"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
                 android:textSize="14sp" />
@@ -237,8 +245,9 @@
 
             <ImageView
                 android:id="@+id/nextArrow"
-                android:layout_width="18dp"
-                android:layout_height="18dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@string/next"
                 android:src="@drawable/ic_arrow_right_simple"
                 app:tint="@android:color/white" />
         </LinearLayout>
