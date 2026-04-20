@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Riide In Map</title>
+    <title>Vehicle Selection Map</title>
 
     <link
             rel="stylesheet"
@@ -51,25 +51,37 @@
         keyboard: false,
         tap: false,
         touchZoom: false
-    }).setView([27.7172, 85.3240], 15);
+    }).setView([27.7172, 85.3240], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const pickupMarker = L.marker([27.7172, 85.3240]).addTo(map);
-    const destinationMarker = L.marker([27.7215, 85.3318]).addTo(map);
+    window.setRoute = function(fromLat, fromLon, toLat, toLon) {
+        if (window.pickupMarker) map.removeLayer(window.pickupMarker);
+        if (window.destinationMarker) map.removeLayer(window.destinationMarker);
+        if (window.routeLine) map.removeLayer(window.routeLine);
 
-    const routeLine = L.polyline([
-        [27.7172, 85.3240],
-        [27.7190, 85.3270],
-        [27.7215, 85.3318]
-    ], {
-        color: '#63B7C4',
-        weight: 6,
-        opacity: 0.9
-    }).addTo(map);
+        const fromPoint = [parseFloat(fromLat), parseFloat(fromLon)];
+        const toPoint = [parseFloat(toLat), parseFloat(toLon)];
+
+        window.pickupMarker = L.marker(fromPoint).addTo(map);
+        window.destinationMarker = L.marker(toPoint).addTo(map);
+
+        window.routeLine = L.polyline([
+            fromPoint,
+            [(fromPoint[0] + toPoint[0]) / 2, (fromPoint[1] + toPoint[1]) / 2],
+            toPoint
+        ], {
+            color: '#63B7C4',
+            weight: 6,
+            opacity: 0.9
+        }).addTo(map);
+
+        const bounds = L.latLngBounds([fromPoint, toPoint]);
+        map.fitBounds(bounds, { padding: [40, 40] });
+    };
 </script>
 
 </body>

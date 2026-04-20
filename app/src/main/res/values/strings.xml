@@ -119,5 +119,28 @@
     <string name="location">Location</string>
     <string name="driver_located_near_you">Driver located near you</string>
     <string name="apply_promo_code">Apply Promo Code</string>
+    <string name="near_by_you">Near by you</string>
+    <string name="parcel_nearby">Parcel nearby</string>
+
+    <string name="minutes_2">2 min</string>
+    <string name="minutes_3">3 min</string>
+    <string name="minutes_4">4 min</string>
+    <string name="minutes_5">5 min</string>
+    <string name="minutes_6">6 min</string>
+    <string name="minutes_7">7 min</string>
+
+    <string name="price_rs_50">Rs 50</string>
+    <string name="price_rs_70">Rs 70</string>
+    <string name="price_rs_80">Rs 80</string>
+    <string name="price_rs_100">Rs 100</string>
+    <string name="price_rs_120">Rs 120</string>
+    <string name="price_rs_130">Rs 130</string>
+    <string name="price_rs_160">Rs 160</string>
+    <string name="price_rs_180">Rs 180</string>
+    <string name="price_rs_200">Rs 200</string>
+    <string name="price_rs_240">Rs 240</string>
+    <string name="price_rs_280">Rs 280</string>
+    <string name="price_rs_400">Rs 400</string>
+    <string name="find_a_driver">Find a driver</string>
 </resources>
 

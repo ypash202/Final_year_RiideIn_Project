@@ -22,8 +22,8 @@ import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
-import java.net.URLEncoder
 import java.net.URL
+import java.net.URLEncoder
 import kotlin.concurrent.thread
 import kotlin.math.pow
 
@@ -97,15 +97,43 @@ class EnterRouteActivity : AppCompatActivity() {
     private fun setupAutocomplete(field: AutoCompleteTextView) {
         field.threshold = 1
 
+        field.setOnFocusChangeListener { _, hasFocus ->
+            val currentText = field.text.toString().trim()
+            if (hasFocus && currentText.isNotEmpty()) {
+                fetchSuggestions(field, currentText)
+            }
+        }
+
+        field.setOnClickListener {
+            val currentText = field.text.toString().trim()
+            if (currentText.isNotEmpty()) {
+                fetchSuggestions(field, currentText)
+            } else {
+                val localSuggestions = knownPlaces.map { it.name }
+                val adapter = ArrayAdapter(
+                    this,
+                    android.R.layout.simple_dropdown_item_1line,
+                    localSuggestions
+                )
+                field.setAdapter(adapter)
+                field.post { field.showDropDown() }
+            }
+        }
+
         field.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+
             override fun afterTextChanged(s: Editable?) = Unit
 
             override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {
                 val query = text?.toString()?.trim().orEmpty()
-                if (query.length >= 2) {
-                    fetchSuggestions(field, query)
+
+                if (query.isEmpty()) {
+                    field.dismissDropDown()
+                    return
                 }
+
+                fetchSuggestions(field, query)
             }
         })
 
@@ -126,10 +154,11 @@ class EnterRouteActivity : AppCompatActivity() {
         return ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+        ) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestLocationPermission() {
@@ -197,6 +226,16 @@ class EnterRouteActivity : AppCompatActivity() {
                 connection.requestMethod = "GET"
                 connection.connectTimeout = 10000
                 connection.readTimeout = 10000
+                connection.setRequestProperty("User-Agent", "RiideIn-App")
+
+                val responseCode = connection.responseCode
+
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    runOnUiThread {
+                        fromEditText.setText(fallbackPlace, false)
+                    }
+                    return@thread
+                }
 
                 val reader = BufferedReader(InputStreamReader(connection.inputStream))
                 val response = reader.use { it.readText() }
@@ -253,6 +292,11 @@ class EnterRouteActivity : AppCompatActivity() {
     private fun fetchSuggestions(targetField: AutoCompleteTextView, query: String) {
         thread {
             try {
+                val localSuggestions = knownPlaces
+                    .map { it.name }
+                    .filter { it.contains(query, ignoreCase = true) }
+                    .toMutableList()
+
                 val encodedQuery = URLEncoder.encode(query, "UTF-8")
                 val urlString = "https://photon.komoot.io/api/?q=$encodedQuery&limit=6"
                 val url = URL(urlString)
@@ -260,41 +304,85 @@ class EnterRouteActivity : AppCompatActivity() {
                 connection.requestMethod = "GET"
                 connection.connectTimeout = 10000
                 connection.readTimeout = 10000
+                connection.setRequestProperty("User-Agent", "RiideIn-App")
 
-                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                val response = reader.use { it.readText() }
+                val onlineSuggestions = mutableListOf<String>()
 
-                val json = JSONObject(response)
-                val features = json.getJSONArray("features")
-                val suggestions = mutableListOf<String>()
+                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                    val reader = BufferedReader(InputStreamReader(connection.inputStream))
+                    val response = reader.use { it.readText() }
 
-                for (i in 0 until features.length()) {
-                    val properties = features.getJSONObject(i).getJSONObject("properties")
-                    val parts = mutableListOf<String>()
+                    val json = JSONObject(response)
+                    val features = json.getJSONArray("features")
 
-                    if (properties.has("name")) parts.add(properties.getString("name"))
-                    if (properties.has("street")) parts.add(properties.getString("street"))
-                    if (properties.has("district")) parts.add(properties.getString("district"))
-                    if (properties.has("city")) parts.add(properties.getString("city"))
+                    for (i in 0 until features.length()) {
+                        val properties = features.getJSONObject(i).getJSONObject("properties")
+                        val parts = mutableListOf<String>()
 
-                    val suggestion = parts.distinct().joinToString(", ")
-                    if (suggestion.isNotBlank()) {
-                        suggestions.add(suggestion)
+                        if (properties.has("name")) parts.add(properties.getString("name"))
+                        if (properties.has("street")) parts.add(properties.getString("street"))
+                        if (properties.has("district")) parts.add(properties.getString("district"))
+                        if (properties.has("city")) parts.add(properties.getString("city"))
+                        if (properties.has("state")) parts.add(properties.getString("state"))
+
+                        val suggestion = parts
+                            .map { it.trim() }
+                            .filter { it.isNotBlank() }
+                            .distinct()
+                            .joinToString(", ")
+
+                        if (suggestion.isNotBlank()) {
+                            onlineSuggestions.add(suggestion)
+                        }
                     }
                 }
+
+                val finalSuggestions = (localSuggestions + onlineSuggestions).distinct()
 
                 runOnUiThread {
                     val adapter = ArrayAdapter(
                         this@EnterRouteActivity,
                         android.R.layout.simple_dropdown_item_1line,
-                        suggestions.distinct()
+                        finalSuggestions
                     )
+
                     targetField.setAdapter(adapter)
-                    if (suggestions.isNotEmpty()) {
-                        targetField.showDropDown()
+                    adapter.notifyDataSetChanged()
+
+                    if (finalSuggestions.isNotEmpty() && targetField.hasFocus()) {
+                        targetField.post {
+                            targetField.showDropDown()
+                        }
+                    } else {
+                        targetField.dismissDropDown()
                     }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                val fallbackSuggestions = knownPlaces
+                    .map { it.name }
+                    .filter { it.contains(query, ignoreCase = true) }
+                    .distinct()
+
+                runOnUiThread {
+                    val adapter = ArrayAdapter(
+                        this@EnterRouteActivity,
+                        android.R.layout.simple_dropdown_item_1line,
+                        fallbackSuggestions
+                    )
+
+                    targetField.setAdapter(adapter)
+                    adapter.notifyDataSetChanged()
+
+                    if (fallbackSuggestions.isNotEmpty() && targetField.hasFocus()) {
+                        targetField.post {
+                            targetField.showDropDown()
+                        }
+                    } else {
+                        targetField.dismissDropDown()
+                    }
+                }
+
+                e.printStackTrace()
             }
         }
     }
