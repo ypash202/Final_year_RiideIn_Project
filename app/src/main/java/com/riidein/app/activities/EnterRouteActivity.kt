@@ -196,6 +196,18 @@ class EnterRouteActivity : AppCompatActivity() {
                     } catch (_: SecurityException) {
                     }
                 }
+
+                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+                    // Required for older Android versions / emulators
+                }
+
+                override fun onProviderEnabled(provider: String) {
+                    // Optional
+                }
+
+                override fun onProviderDisabled(provider: String) {
+                    // Optional
+                }
             }
 
             if (ActivityCompat.checkSelfPermission(

@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     tools:context=".activities.ChooseDriverActivity">
 
-    <!-- Background map -->
     <ImageView
         android:id="@+id/mapBackground"
         android:layout_width="match_parent"
@@ -13,20 +12,95 @@
         android:scaleType="centerCrop"
         android:src="@drawable/map_bg" />
 
-    <!-- Dark overlay -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#88000000" />
 
-    <!-- Top content -->
+    <TextView
+        android:id="@+id/toMapText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="68dp"
+        android:layout_marginEnd="72dp"
+        android:background="@drawable/round_dark_button_bg"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:maxWidth="150dp"
+        android:paddingStart="12dp"
+        android:paddingTop="7dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="7dp"
+        android:text="Destination"
+        android:textColor="@android:color/white"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="62dp"
+        android:layout_height="62dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="92dp"
+        android:layout_marginEnd="110dp"
+        android:background="@drawable/round_dark_button_bg"
+        android:alpha="0.35" />
+
+    <View
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginStart="178dp"
+        android:layout_marginTop="178dp"
+        android:background="@drawable/round_dark_button_bg"
+        android:alpha="0.35" />
+
+    <TextView
+        android:id="@+id/fromMapText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="145dp"
+        android:layout_marginTop="254dp"
+        android:background="@drawable/round_dark_button_bg"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:maxWidth="170dp"
+        android:paddingStart="12dp"
+        android:paddingTop="7dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="7dp"
+        android:text="Current Location"
+        android:textColor="@android:color/white"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="4dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="118dp"
+        android:layout_marginStart="266dp"
+        android:background="#63B7C4" />
+
+    <View
+        android:layout_width="4dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="161dp"
+        android:layout_marginStart="265dp"
+        android:rotation="84"
+        android:background="#63B7C4" />
+
+    <View
+        android:layout_width="4dp"
+        android:layout_height="46dp"
+        android:layout_marginTop="198dp"
+        android:layout_marginStart="237dp"
+        android:background="#63B7C4" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:padding="18dp">
 
-        <!-- Cancel request button -->
         <Button
             android:id="@+id/cancelRequestButton"
             android:layout_width="170dp"
@@ -37,7 +111,6 @@
             android:textColor="@android:color/white"
             android:textSize="14sp" />
 
-        <!-- Title -->
         <TextView
             android:id="@+id/chooseDriverTitle"
             android:layout_width="wrap_content"
@@ -48,8 +121,8 @@
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <!-- Driver card 1 -->
         <LinearLayout
+            android:id="@+id/driverCard1"
             android:layout_width="match_parent"
             android:layout_height="140dp"
             android:layout_marginTop="18dp"
@@ -57,7 +130,6 @@
             android:orientation="vertical"
             android:padding="14dp">
 
-            <!-- Top row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -77,6 +149,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/driver1NameText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Binod"
@@ -85,9 +158,10 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/driver1VehicleText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="MOTOR -BIKE Honda"
+                        android:text="MOTOR-BIKE Honda"
                         android:textColor="@android:color/white"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -100,13 +174,15 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/driver1PriceText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="NPR 200"
+                        android:text="Rs 200"
                         android:textColor="@android:color/white"
                         android:textSize="14sp" />
 
                     <TextView
+                        android:id="@+id/driver1TimeText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="1 min"
@@ -116,7 +192,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Bottom buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -136,6 +211,7 @@
                     android:textColor="@android:color/white"
                     android:textSize="14sp"
                     android:textStyle="bold" />
+
                 <Button
                     android:id="@+id/declineButton1"
                     android:layout_width="0dp"
@@ -147,12 +223,11 @@
                     android:textColor="@android:color/white"
                     android:textSize="14sp"
                     android:textStyle="bold" />
-
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Driver card 2 -->
         <LinearLayout
+            android:id="@+id/driverCard2"
             android:layout_width="match_parent"
             android:layout_height="140dp"
             android:layout_marginTop="18dp"
@@ -160,7 +235,6 @@
             android:orientation="vertical"
             android:padding="14dp">
 
-            <!-- Top row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -180,6 +254,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/driver2NameText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Sulav"
@@ -188,9 +263,10 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/driver2VehicleText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="MOTOR -BIKE Bajaj"
+                        android:text="MOTOR-BIKE Bajaj"
                         android:textColor="@android:color/white"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -203,13 +279,15 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/driver2PriceText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="NPR 200"
+                        android:text="Rs 200"
                         android:textColor="@android:color/white"
                         android:textSize="14sp" />
 
                     <TextView
+                        android:id="@+id/driver2TimeText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="2 min"
@@ -219,13 +297,13 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Bottom buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"
                 android:gravity="center"
                 android:orientation="horizontal">
+
                 <Button
                     android:id="@+id/acceptButton2"
                     android:layout_width="0dp"
