@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -35,6 +36,14 @@ class CustomerHomeActivity : AppCompatActivity() {
         val locationButton = findViewById<ImageButton>(R.id.locationButton)
 
         setupMapWebView(mapWebView)
+
+        onBackPressedDispatcher.addCallback(this) {
+            if (mapWebView.canGoBack()) {
+                mapWebView.goBack()
+            } else {
+                finish()
+            }
+        }
 
         backButton.setOnClickListener {
             finish()
@@ -64,6 +73,7 @@ class CustomerHomeActivity : AppCompatActivity() {
         webView.webChromeClient = WebChromeClient()
 
         val webSettings = webView.settings
+        // JavaScript is required for the local Leaflet map in assets/map.html
         webSettings.javaScriptEnabled = true
         webSettings.domStorageEnabled = true
         webSettings.cacheMode = WebSettings.LOAD_DEFAULT
@@ -93,14 +103,5 @@ class CustomerHomeActivity : AppCompatActivity() {
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to load customer name", Toast.LENGTH_SHORT).show()
             }
-    }
-
-    override fun onBackPressed() {
-        val mapWebView = findViewById<WebView>(R.id.mapWebView)
-        if (mapWebView.canGoBack()) {
-            mapWebView.goBack()
-        } else {
-            super.onBackPressed()
-        }
     }
 }
