@@ -174,5 +174,21 @@
     <string name="chat_seen_time">✓✓ 3:00PM</string>
     <string name="call_driver">Call Driver</string>
     <string name="cancel_ride_button">Cancel Ride</string>
+    <string name="sos">SOS</string>
+
+    <string name="ride_state_arriving">Driver is arriving in 1 min</string>
+    <string name="ride_state_arrived">Your driver has arrived</string>
+    <string name="ride_state_completed">Ride completed successfully</string>
+    <string name="start_ride">Start Ride</string>
+    <string name="back_to_home">Back to Home</string>
+    <string name="sos_title">Emergency SOS</string>
+    <string name="sos_message">This will call Nepal Police emergency number 100. Do you want to continue?</string>
+    <string name="call_100">Call 100</string>
+    <string name="cancel">Cancel</string>
+    <string name="ride_started_demo">Ride started and completed for demo</string>
+    <string name="direct_call_failed">Could not place direct call. Opening dialer instead.</string>
+    <string name="call_permission_denied">Call permission denied. Opening dialer instead.</string>
+    <string name="vehicle_type_cab">CAB</string>
+    <string name="vehicle_type_delivery">DELIVERY</string>=
 </resources>
 
