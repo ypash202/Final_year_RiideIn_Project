@@ -79,15 +79,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/menuButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:contentDescription="@string/menu"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_sort_by_size"
-                app:tint="@android:color/white" />
         </LinearLayout>
 
         <LinearLayout

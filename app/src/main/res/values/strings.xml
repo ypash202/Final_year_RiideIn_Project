@@ -198,5 +198,6 @@
     <string name="fetching_location_sos">Fetching current location for SOS...</string>
     <string name="sos_saved">SOS alert saved with current trip details</string>
     <string name="sos_save_failed">SOS will continue even if alert save failed</string>
+
 </resources>
 

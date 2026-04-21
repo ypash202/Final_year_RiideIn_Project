@@ -29,7 +29,7 @@ class CustomerHomeActivity : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
 
         val mapWebView = findViewById<WebView>(R.id.mapWebView)
-        val backButton = findViewById<ImageButton>(R.id.backButton)
+        val menuButton = findViewById<ImageButton>(R.id.menuButton)
         val closeButton = findViewById<ImageButton>(R.id.closeButton)
         val searchBox = findViewById<TextView>(R.id.searchBox)
         val promoButton = findViewById<Button>(R.id.promoButton)
@@ -45,8 +45,8 @@ class CustomerHomeActivity : AppCompatActivity() {
             }
         }
 
-        backButton.setOnClickListener {
-            finish()
+        menuButton.setOnClickListener {
+            startActivity(Intent(this@CustomerHomeActivity, SideMenuActivity::class.java))
         }
 
         closeButton.setOnClickListener {
@@ -54,7 +54,7 @@ class CustomerHomeActivity : AppCompatActivity() {
         }
 
         searchBox.setOnClickListener {
-            startActivity(Intent(this, EnterRouteActivity::class.java))
+            startActivity(Intent(this@CustomerHomeActivity, EnterRouteActivity::class.java))
         }
 
         locationButton.setOnClickListener {
@@ -72,8 +72,7 @@ class CustomerHomeActivity : AppCompatActivity() {
         webView.webViewClient = WebViewClient()
         webView.webChromeClient = WebChromeClient()
 
-        val webSettings = webView.settings
-        // JavaScript is required for the local Leaflet map in assets/map.html
+        val webSettings: WebSettings = webView.settings
         webSettings.javaScriptEnabled = true
         webSettings.domStorageEnabled = true
         webSettings.cacheMode = WebSettings.LOAD_DEFAULT

@@ -10,28 +10,30 @@
         android:id="@+id/mapWebView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#99000000" />
 
     <ImageButton
-        android:id="@+id/backButton"
+        android:id="@+id/menuButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginStart="18dp"
-        android:layout_marginTop="18dp"
-        android:background="@drawable/round_dark_button_bg"
-        android:contentDescription="@string/back"
-        android:padding="10dp"
-        android:src="@drawable/ic_back_custom"
-        app:tint="@android:color/white" />
+        android:layout_gravity="top|start"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/menu"
+        android:padding="8dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_menu_white" />
 
     <ImageButton
         android:id="@+id/closeButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_gravity="end"
+        android:layout_gravity="top|end"
         android:layout_marginTop="18dp"
         android:layout_marginEnd="18dp"
         android:background="@drawable/round_dark_button_bg"
@@ -125,13 +127,11 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="@string/driver_located_near_you"
                 android:textColor="@android:color/white"
-                android:textSize="11sp"
-                android:maxLines="1"
-                android:ellipsize="end"/>
-
-
+                android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -185,77 +185,44 @@
                 android:gravity="center"
                 android:orientation="horizontal">
 
-                <LinearLayout
+                <TextView
                     android:id="@+id/motoOption"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:drawableTop="@drawable/bike"
                     android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="6dp">
+                    android:padding="6dp"
+                    android:text="@string/moto"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    app:drawableTint="@null" />
 
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/bike" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/moto"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <LinearLayout
+                <TextView
                     android:id="@+id/cabOption"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:drawableTop="@drawable/car"
                     android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="6dp">
+                    android:padding="6dp"
+                    android:text="@string/cab"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    app:drawableTint="@null" />
 
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/car" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/cab"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <LinearLayout
+                <TextView
                     android:id="@+id/deliveryOption"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:drawableTop="@drawable/delivery"
                     android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="6dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/delivery" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/delivery"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp" />
-                </LinearLayout>
+                    android:padding="6dp"
+                    android:text="@string/delivery"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    app:drawableTint="@null" />
             </LinearLayout>
 
             <TextView
@@ -280,11 +247,13 @@
                 android:id="@+id/promoButton"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
+                android:layout_marginStart="4dp"
                 android:layout_marginTop="16dp"
+                android:layout_marginEnd="4dp"
                 android:backgroundTint="#4DB6C8"
                 android:text="@string/apply_promo_code"
                 android:textAllCaps="false"
-                android:textColor="@android:color/white"
+                android:textColor="#12333A"
                 android:textSize="14sp" />
         </LinearLayout>
     </LinearLayout>
