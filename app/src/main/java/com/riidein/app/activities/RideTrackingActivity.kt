@@ -1,8 +1,12 @@
 package com.riidein.app.activities
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -16,6 +20,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.riidein.app.R
 
 class RideTrackingActivity : AppCompatActivity() {
@@ -39,8 +45,13 @@ class RideTrackingActivity : AppCompatActivity() {
     private lateinit var driverProfileImage: ImageView
     private lateinit var vehicleImage: ImageView
 
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
+    private lateinit var locationManager: LocationManager
+
     private var driverName: String = "Binod"
     private var vehicleName: String = "Moto"
+    private var vehicleNumber: String = "BA 01 PA 1234"
     private var selectedPrice: String = "Rs 200"
     private var fromLocation: String = "Boudha"
     private var toLocation: String = "Trade Tower, Thapathali"
@@ -52,17 +63,22 @@ class RideTrackingActivity : AppCompatActivity() {
     }
 
     private var currentRideState = RideState.ARRIVING
+    private var currentLocationListener: LocationListener? = null
 
-    private val callPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) {
-                callPoliceDirectly()
+    private val locationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                    permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+            if (granted) {
+                fetchCurrentLocationAndTriggerSos()
             } else {
                 Toast.makeText(
                     this,
-                    getString(R.string.call_permission_denied),
+                    getString(R.string.location_permission_denied_sos),
                     Toast.LENGTH_SHORT
                 ).show()
+                saveSosAlertToFirestore(null, null)
                 openPoliceDialer()
             }
         }
@@ -70,6 +86,10 @@ class RideTrackingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_ride_tracking)
+
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
         initViews()
         readIntentData()
@@ -102,6 +122,10 @@ class RideTrackingActivity : AppCompatActivity() {
     private fun readIntentData() {
         driverName = intent.getStringExtra("driver_name") ?: "Binod"
         vehicleName = intent.getStringExtra("vehicle_name") ?: "Moto"
+        vehicleNumber = intent.getStringExtra("vehicle_number") ?: when (driverName.lowercase()) {
+            "sulav" -> "BA 02 PA 5678"
+            else -> "BA 01 PA 1234"
+        }
         selectedPrice = intent.getStringExtra("selected_price") ?: "Rs 200"
         fromLocation = intent.getStringExtra("from_location") ?: "Boudha"
         toLocation = intent.getStringExtra("to_location") ?: "Trade Tower, Thapathali"
@@ -154,17 +178,15 @@ class RideTrackingActivity : AppCompatActivity() {
         cancelRideButton.setOnClickListener {
             when (currentRideState) {
                 RideState.ARRIVING -> openCancelRidePage()
-
                 RideState.ARRIVED -> {
                     currentRideState = RideState.COMPLETED
                     updateRideStateUI()
                     Toast.makeText(
                         this,
-                        getString(R.string.ride_started_demo),
+                        getString(R.string.ride_completed_demo),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-
                 RideState.COMPLETED -> {
                     val intent = Intent(this, CustomerHomeActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
@@ -180,12 +202,10 @@ class RideTrackingActivity : AppCompatActivity() {
                     currentRideState = RideState.ARRIVED
                     updateRideStateUI()
                 }
-
                 RideState.ARRIVED -> {
                     currentRideState = RideState.COMPLETED
                     updateRideStateUI()
                 }
-
                 RideState.COMPLETED -> {
                     val intent = Intent(this, CustomerHomeActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
@@ -212,7 +232,6 @@ class RideTrackingActivity : AppCompatActivity() {
                 paymentAmountText.visibility = View.VISIBLE
                 paymentMethodText.visibility = View.VISIBLE
             }
-
             RideState.ARRIVED -> {
                 arrivalTitle.text = getString(R.string.ride_state_arrived)
                 cancelRideButton.text = getString(R.string.start_ride)
@@ -223,7 +242,6 @@ class RideTrackingActivity : AppCompatActivity() {
                 paymentAmountText.visibility = View.VISIBLE
                 paymentMethodText.visibility = View.VISIBLE
             }
-
             RideState.COMPLETED -> {
                 arrivalTitle.text = getString(R.string.ride_state_completed)
                 cancelRideButton.text = getString(R.string.back_to_home)
@@ -241,6 +259,7 @@ class RideTrackingActivity : AppCompatActivity() {
         val intent = Intent(this, CancelRideActivity::class.java)
         intent.putExtra("driver_name", driverName)
         intent.putExtra("vehicle_name", driverVehicleText.text.toString())
+        intent.putExtra("vehicle_number", vehicleNumber)
         intent.putExtra("from_location", fromLocation)
         intent.putExtra("to_location", toLocation)
         startActivity(intent)
@@ -249,43 +268,182 @@ class RideTrackingActivity : AppCompatActivity() {
     private fun showSosDialog() {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.sos_title))
-            .setMessage(getString(R.string.sos_message))
+            .setMessage(getString(R.string.sos_message_with_location))
             .setPositiveButton(getString(R.string.call_100)) { _, _ ->
-                makeEmergencyCall()
+                triggerSosFlow()
             }
             .setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 
-    private fun makeEmergencyCall() {
-        when {
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CALL_PHONE
-            ) == PackageManager.PERMISSION_GRANTED -> {
-                callPoliceDirectly()
-            }
-
-            else -> {
-                callPermissionLauncher.launch(Manifest.permission.CALL_PHONE)
-            }
+    private fun triggerSosFlow() {
+        if (hasLocationPermission()) {
+            fetchCurrentLocationAndTriggerSos()
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
         }
     }
 
-    private fun callPoliceDirectly() {
+    private fun hasLocationPermission(): Boolean {
+        val fineLocationGranted = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val coarseLocationGranted = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        return fineLocationGranted || coarseLocationGranted
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun fetchCurrentLocationAndTriggerSos() {
+        if (!hasLocationPermission()) {
+            saveSosAlertToFirestore(null, null)
+            openPoliceDialer()
+            return
+        }
+
         try {
-            val callIntent = Intent(Intent.ACTION_CALL).apply {
-                data = "tel:100".toUri()
+            val provider = when {
+                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> LocationManager.NETWORK_PROVIDER
+                else -> null
             }
-            startActivity(callIntent)
+
+            if (provider == null) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.no_location_provider),
+                    Toast.LENGTH_SHORT
+                ).show()
+                saveSosAlertToFirestore(null, null)
+                openPoliceDialer()
+                return
+            }
+
+            currentLocationListener = object : LocationListener {
+                override fun onLocationChanged(location: Location) {
+                    try {
+                        if (hasLocationPermission()) {
+                            locationManager.removeUpdates(this)
+                        }
+                    } catch (_: SecurityException) {
+                    }
+
+                    saveSosAlertToFirestore(location.latitude, location.longitude)
+                    openPoliceDialer()
+                }
+
+                @Deprecated("Deprecated in API 29")
+                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+
+                override fun onProviderEnabled(provider: String) {}
+
+                override fun onProviderDisabled(provider: String) {}
+            }
+
+            val lastKnown = getLastKnownSafeLocation()
+            if (lastKnown != null && lastKnown.latitude != 0.0 && lastKnown.longitude != 0.0) {
+                saveSosAlertToFirestore(lastKnown.latitude, lastKnown.longitude)
+                openPoliceDialer()
+            } else {
+                locationManager.requestLocationUpdates(
+                    provider,
+                    0L,
+                    0f,
+                    currentLocationListener!!
+                )
+
+                Toast.makeText(
+                    this,
+                    getString(R.string.fetching_location_sos),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        } catch (_: SecurityException) {
+            saveSosAlertToFirestore(null, null)
+            openPoliceDialer()
         } catch (_: Exception) {
-            Toast.makeText(
-                this,
-                getString(R.string.direct_call_failed),
-                Toast.LENGTH_SHORT
-            ).show()
+            saveSosAlertToFirestore(null, null)
             openPoliceDialer()
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getLastKnownSafeLocation(): Location? {
+        if (!hasLocationPermission()) return null
+
+        return try {
+            val gpsLocation =
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                } else {
+                    null
+                }
+
+            val networkLocation =
+                if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                    locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                } else {
+                    null
+                }
+
+            when {
+                gpsLocation != null && networkLocation != null -> {
+                    if (gpsLocation.time >= networkLocation.time) gpsLocation else networkLocation
+                }
+                gpsLocation != null -> gpsLocation
+                else -> networkLocation
+            }
+        } catch (_: SecurityException) {
+            null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun saveSosAlertToFirestore(latitude: Double?, longitude: Double?) {
+        val currentUser = auth.currentUser
+        val userId = currentUser?.uid ?: "unknown_user"
+
+        val sosData = hashMapOf(
+            "userId" to userId,
+            "driverName" to driverName,
+            "vehicleName" to driverVehicleText.text.toString(),
+            "vehicleNumber" to vehicleNumber,
+            "fromLocation" to fromLocation,
+            "toLocation" to toLocation,
+            "latitude" to latitude,
+            "longitude" to longitude,
+            "phoneNumber" to "100",
+            "timestamp" to System.currentTimeMillis(),
+            "status" to "triggered"
+        )
+
+        db.collection("sos_alerts")
+            .add(sosData)
+            .addOnSuccessListener {
+                Toast.makeText(
+                    this,
+                    getString(R.string.sos_saved),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(
+                    this,
+                    getString(R.string.sos_save_failed),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
     }
 
     private fun openPoliceDialer() {
@@ -293,5 +451,16 @@ class RideTrackingActivity : AppCompatActivity() {
             data = "tel:100".toUri()
         }
         startActivity(dialIntent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            if (::locationManager.isInitialized && hasLocationPermission()) {
+                currentLocationListener?.let { locationManager.removeUpdates(it) }
+            }
+        } catch (_: SecurityException) {
+        } catch (_: Exception) {
+        }
     }
 }

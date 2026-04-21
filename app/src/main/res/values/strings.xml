@@ -189,6 +189,14 @@
     <string name="direct_call_failed">Could not place direct call. Opening dialer instead.</string>
     <string name="call_permission_denied">Call permission denied. Opening dialer instead.</string>
     <string name="vehicle_type_cab">CAB</string>
-    <string name="vehicle_type_delivery">DELIVERY</string>=
+    <string name="vehicle_type_delivery">DELIVERY</string>
+
+    <string name="ride_completed_demo">Ride completed for demo</string>
+    <string name="sos_message_with_location">This will save your current trip location and open Nepal Police emergency number 100. Do you want to continue?</string>
+    <string name="location_permission_denied_sos">Location permission denied. SOS will continue without exact location.</string>
+    <string name="no_location_provider">No location provider available. SOS will continue without exact location.</string>
+    <string name="fetching_location_sos">Fetching current location for SOS...</string>
+    <string name="sos_saved">SOS alert saved with current trip details</string>
+    <string name="sos_save_failed">SOS will continue even if alert save failed</string>
 </resources>
 
