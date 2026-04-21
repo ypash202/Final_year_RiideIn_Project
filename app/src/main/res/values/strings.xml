@@ -199,5 +199,11 @@
     <string name="sos_saved">SOS alert saved with current trip details</string>
     <string name="sos_save_failed">SOS will continue even if alert save failed</string>
 
+
+    <string name="system">System</string>
+    <string name="promotion">Promotion</string>
+    <string name="system_notification_text">Your booking #1234 has been suc...</string>
+    <string name="promotion_notification_text">Invite friends - Get 3 coupons each!</string>
+
 </resources>
 
