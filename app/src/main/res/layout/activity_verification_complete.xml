@@ -42,41 +42,42 @@
                 app:tint="@android:color/white" />
         </RelativeLayout>
 
-        <TextView
-            android:id="@+id/titleText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="52dp"
-            android:gravity="center"
-            android:text="@string/verification_complete"
-            android:textColor="@android:color/white"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/messageText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:gravity="center"
-            android:lineSpacingExtra="5dp"
-            android:text="@string/driver_verification_message"
-            android:textColor="@android:color/white"
-            android:textSize="14sp" />
-
-        <ImageView
-            android:id="@+id/checkIcon"
-            android:layout_width="92dp"
-            android:layout_height="92dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="34dp"
-            android:contentDescription="@string/verification_complete"
-            android:src="@drawable/ic_settings_blue_check" />
-
-        <View
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/checkIcon"
+                android:layout_width="92dp"
+                android:layout_height="92dp"
+                android:contentDescription="@string/verification_complete"
+                android:src="@drawable/ic_settings_blue_check" />
+
+            <TextView
+                android:id="@+id/titleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:gravity="center"
+                android:text="@string/verification_complete"
+                android:textColor="@android:color/white"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/messageText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:text="@string/driver_verification_message"
+                android:textColor="#B3B3B3"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/goOnlineButton"
@@ -84,11 +85,10 @@
             android:layout_height="50dp"
             android:layout_marginBottom="28dp"
             android:background="@drawable/driver_mode_button_bg"
-            android:text="@string/go_online"
+            android:text="@string/go_to_login"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
-            android:textSize="17sp"
-            android:textStyle="normal" />
+            android:textSize="17sp" />
 
     </LinearLayout>
 

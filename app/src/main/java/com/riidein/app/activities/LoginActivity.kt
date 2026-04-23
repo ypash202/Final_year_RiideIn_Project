@@ -59,7 +59,7 @@ class LoginActivity : AppCompatActivity() {
                             db.collection("users").document(uid).get()
                                 .addOnSuccessListener { document ->
                                     if (document.exists()) {
-                                        val role = document.getString("role") ?: ""
+                                        val role = document.getString("role")?.trim()?.lowercase() ?: ""
                                         val profileCompleted = document.getBoolean("profileCompleted") ?: false
 
                                         when (role) {
@@ -70,9 +70,8 @@ class LoginActivity : AppCompatActivity() {
                                             }
 
                                             "driver" -> {
-                                                Toast.makeText(this, "Driver login successful", Toast.LENGTH_SHORT).show()
-
                                                 if (profileCompleted) {
+                                                    Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
                                                     startActivity(Intent(this, DriverHomeActivity::class.java))
                                                 } else {
                                                     startActivity(Intent(this, DriverLicenceNumberActivity::class.java))

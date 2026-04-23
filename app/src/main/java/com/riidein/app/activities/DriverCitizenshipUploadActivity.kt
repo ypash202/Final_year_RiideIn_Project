@@ -29,7 +29,6 @@ class DriverCitizenshipUploadActivity : AppCompatActivity() {
 
     private var frontImageUri: Uri? = null
     private var backImageUri: Uri? = null
-
     private var selectingFrontImage = true
 
     private val frontGalleryLauncher =
@@ -37,6 +36,8 @@ class DriverCitizenshipUploadActivity : AppCompatActivity() {
             if (uri != null) {
                 frontImageUri = uri
                 frontPreviewImage.setImageURI(uri)
+                frontPreviewImage.imageTintList = null
+                Toast.makeText(this, "Front image selected", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -45,6 +46,8 @@ class DriverCitizenshipUploadActivity : AppCompatActivity() {
             if (uri != null) {
                 backImageUri = uri
                 backPreviewImage.setImageURI(uri)
+                backPreviewImage.imageTintList = null
+                Toast.makeText(this, "Back image selected", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -54,12 +57,18 @@ class DriverCitizenshipUploadActivity : AppCompatActivity() {
                 val bitmap = result.data?.extras?.get("data") as? Bitmap
                 if (bitmap != null) {
                     if (selectingFrontImage) {
-                        frontPreviewImage.setImageBitmap(bitmap)
                         frontImageUri = getImageUri(bitmap)
+                        frontPreviewImage.setImageBitmap(bitmap)
+                        frontPreviewImage.imageTintList = null
+                        Toast.makeText(this, "Front photo captured", Toast.LENGTH_SHORT).show()
                     } else {
-                        backPreviewImage.setImageBitmap(bitmap)
                         backImageUri = getImageUri(bitmap)
+                        backPreviewImage.setImageBitmap(bitmap)
+                        backPreviewImage.imageTintList = null
+                        Toast.makeText(this, "Back photo captured", Toast.LENGTH_SHORT).show()
                     }
+                } else {
+                    Toast.makeText(this, "Failed to capture image", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -130,12 +139,16 @@ class DriverCitizenshipUploadActivity : AppCompatActivity() {
     }
 
     private fun getImageUri(bitmap: Bitmap): Uri? {
-        val path = MediaStore.Images.Media.insertImage(
-            contentResolver,
-            bitmap,
-            "Citizenship_Image",
+        return try {
+            val path = MediaStore.Images.Media.insertImage(
+                contentResolver,
+                bitmap,
+                "Citizenship_Image",
+                null
+            )
+            if (path != null) Uri.parse(path) else null
+        } catch (e: Exception) {
             null
-        )
-        return if (path != null) Uri.parse(path) else null
+        }
     }
 }

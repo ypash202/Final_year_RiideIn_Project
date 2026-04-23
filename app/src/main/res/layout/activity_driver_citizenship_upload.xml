@@ -42,7 +42,6 @@
         </RelativeLayout>
 
         <TextView
-            android:id="@+id/titleText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="34dp"
@@ -59,7 +58,6 @@
             android:textColor="#AAAAAA"
             android:textSize="14sp" />
 
-        <!-- FRONT SIDE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -77,8 +75,7 @@
             android:background="@drawable/driver_upload_card_bg"
             android:scaleType="centerCrop"
             android:src="@android:drawable/ic_menu_gallery"
-            android:padding="24dp"
-            app:tint="@android:color/white" />
+            android:tint="@android:color/white" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -111,7 +108,6 @@
                 android:textColor="@android:color/white" />
         </LinearLayout>
 
-        <!-- BACK SIDE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -129,8 +125,7 @@
             android:background="@drawable/driver_upload_card_bg"
             android:scaleType="centerCrop"
             android:src="@android:drawable/ic_menu_gallery"
-            android:padding="24dp"
-            app:tint="@android:color/white" />
+            android:tint="@android:color/white" />
 
         <LinearLayout
             android:layout_width="match_parent"

@@ -233,6 +233,8 @@
     <string name="forgot_password_message">Enter your registered email and we will send you a reset link.</string>
     <string name="enter_your_email">Enter your email</string>
     <string name="send_reset_link">Send Reset Link</string>
+    <string name="go_to_login">Go to Login</string>
+
 
 
 </resources>
