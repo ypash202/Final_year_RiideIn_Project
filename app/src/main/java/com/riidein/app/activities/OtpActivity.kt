@@ -18,7 +18,6 @@ import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.riidein.app.R
 
-
 class OtpActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
@@ -134,12 +133,21 @@ class OtpActivity : AppCompatActivity() {
             return
         }
 
+        val cleanRole = role.trim().lowercase()
+
         val userMap = hashMapOf(
             "uid" to firebaseUser.uid,
             "name" to name,
             "email" to email,
             "phone" to phone,
-            "role" to role
+            "role" to cleanRole,
+            "profileCompleted" to false,
+            "isAvailable" to false,
+            "licenceNumber" to "",
+            "vehicleType" to "",
+            "vehicleNumber" to "",
+            "citizenshipImageUrl" to "",
+            "driverPhotoUrl" to ""
         )
 
         db.collection("users")
@@ -148,13 +156,19 @@ class OtpActivity : AppCompatActivity() {
             .addOnSuccessListener {
                 Toast.makeText(this, "Registration successful", Toast.LENGTH_LONG).show()
 
-                auth.signOut()
-
-                val intent = Intent(this, LoginActivity::class.java)
-                intent.putExtra("registered_email", email)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
+                if (cleanRole == "driver") {
+                    val intent = Intent(this, DriverLicenceNumberActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                } else {
+                    auth.signOut()
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.putExtra("registered_email", email)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                }
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Failed to save profile: ${e.message}", Toast.LENGTH_LONG).show()

@@ -29,6 +29,11 @@ class LoginActivity : AppCompatActivity() {
         val signupLink = findViewById<TextView>(R.id.signupLink)
         val forgotPasswordLink = findViewById<TextView>(R.id.forgotPasswordLink)
 
+        val registeredEmail = intent.getStringExtra("registered_email")
+        if (!registeredEmail.isNullOrEmpty()) {
+            emailEdit.setText(registeredEmail)
+        }
+
         loginButton.setOnClickListener {
             val email = emailEdit.text.toString().trim()
             val password = passwordEdit.text.toString().trim()
@@ -54,16 +59,30 @@ class LoginActivity : AppCompatActivity() {
                             db.collection("users").document(uid).get()
                                 .addOnSuccessListener { document ->
                                     if (document.exists()) {
-                                        val role = document.getString("role")
+                                        val role = document.getString("role") ?: ""
+                                        val profileCompleted = document.getBoolean("profileCompleted") ?: false
 
-                                        if (role == "customer") {
-                                            Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-                                            startActivity(Intent(this, CustomerHomeActivity::class.java))
-                                            finish()
-                                        } else if (role == "driver") {
-                                            Toast.makeText(this, "Driver flow will be connected next", Toast.LENGTH_SHORT).show()
-                                        } else {
-                                            Toast.makeText(this, "Unknown user role", Toast.LENGTH_LONG).show()
+                                        when (role) {
+                                            "customer" -> {
+                                                Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
+                                                startActivity(Intent(this, CustomerHomeActivity::class.java))
+                                                finish()
+                                            }
+
+                                            "driver" -> {
+                                                Toast.makeText(this, "Driver login successful", Toast.LENGTH_SHORT).show()
+
+                                                if (profileCompleted) {
+                                                    startActivity(Intent(this, DriverHomeActivity::class.java))
+                                                } else {
+                                                    startActivity(Intent(this, DriverLicenceNumberActivity::class.java))
+                                                }
+                                                finish()
+                                            }
+
+                                            else -> {
+                                                Toast.makeText(this, "Unknown user role", Toast.LENGTH_LONG).show()
+                                            }
                                         }
                                     } else {
                                         Toast.makeText(this, "User data not found in Firestore", Toast.LENGTH_LONG).show()
