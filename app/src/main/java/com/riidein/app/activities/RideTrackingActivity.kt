@@ -8,7 +8,6 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -23,6 +22,9 @@ import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.riidein.app.R
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class RideTrackingActivity : AppCompatActivity() {
 
@@ -178,6 +180,7 @@ class RideTrackingActivity : AppCompatActivity() {
         cancelRideButton.setOnClickListener {
             when (currentRideState) {
                 RideState.ARRIVING -> openCancelRidePage()
+
                 RideState.ARRIVED -> {
                     currentRideState = RideState.COMPLETED
                     updateRideStateUI()
@@ -186,12 +189,11 @@ class RideTrackingActivity : AppCompatActivity() {
                         getString(R.string.ride_completed_demo),
                         Toast.LENGTH_SHORT
                     ).show()
+                    saveCompletedRideToFirestore()
                 }
+
                 RideState.COMPLETED -> {
-                    val intent = Intent(this, CustomerHomeActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                    finish()
+                    goToCustomerHome()
                 }
             }
         }
@@ -202,15 +204,15 @@ class RideTrackingActivity : AppCompatActivity() {
                     currentRideState = RideState.ARRIVED
                     updateRideStateUI()
                 }
+
                 RideState.ARRIVED -> {
                     currentRideState = RideState.COMPLETED
                     updateRideStateUI()
+                    saveCompletedRideToFirestore()
                 }
+
                 RideState.COMPLETED -> {
-                    val intent = Intent(this, CustomerHomeActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                    finish()
+                    goToCustomerHome()
                 }
             }
         }
@@ -225,34 +227,91 @@ class RideTrackingActivity : AppCompatActivity() {
             RideState.ARRIVING -> {
                 arrivalTitle.text = getString(R.string.ride_state_arriving)
                 cancelRideButton.text = getString(R.string.cancel_ride)
-                contactDriverRow.visibility = View.VISIBLE
-                nextArrow.visibility = View.VISIBLE
-                sosButton.visibility = View.VISIBLE
-                paymentLabel.visibility = View.VISIBLE
-                paymentAmountText.visibility = View.VISIBLE
-                paymentMethodText.visibility = View.VISIBLE
+                contactDriverRow.visibility = LinearLayout.VISIBLE
+                nextArrow.visibility = ImageView.VISIBLE
+                sosButton.visibility = Button.VISIBLE
+                paymentLabel.visibility = TextView.VISIBLE
+                paymentAmountText.visibility = TextView.VISIBLE
+                paymentMethodText.visibility = TextView.VISIBLE
             }
+
             RideState.ARRIVED -> {
                 arrivalTitle.text = getString(R.string.ride_state_arrived)
                 cancelRideButton.text = getString(R.string.start_ride)
-                contactDriverRow.visibility = View.VISIBLE
-                nextArrow.visibility = View.VISIBLE
-                sosButton.visibility = View.VISIBLE
-                paymentLabel.visibility = View.VISIBLE
-                paymentAmountText.visibility = View.VISIBLE
-                paymentMethodText.visibility = View.VISIBLE
+                contactDriverRow.visibility = LinearLayout.VISIBLE
+                nextArrow.visibility = ImageView.VISIBLE
+                sosButton.visibility = Button.VISIBLE
+                paymentLabel.visibility = TextView.VISIBLE
+                paymentAmountText.visibility = TextView.VISIBLE
+                paymentMethodText.visibility = TextView.VISIBLE
             }
+
             RideState.COMPLETED -> {
                 arrivalTitle.text = getString(R.string.ride_state_completed)
                 cancelRideButton.text = getString(R.string.back_to_home)
-                contactDriverRow.visibility = View.GONE
-                nextArrow.visibility = View.GONE
-                sosButton.visibility = View.GONE
-                paymentLabel.visibility = View.VISIBLE
-                paymentAmountText.visibility = View.VISIBLE
-                paymentMethodText.visibility = View.VISIBLE
+                contactDriverRow.visibility = LinearLayout.GONE
+                nextArrow.visibility = ImageView.GONE
+                sosButton.visibility = Button.GONE
+                paymentLabel.visibility = TextView.VISIBLE
+                paymentAmountText.visibility = TextView.VISIBLE
+                paymentMethodText.visibility = TextView.VISIBLE
             }
         }
+    }
+
+    private fun saveCompletedRideToFirestore() {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Toast.makeText(this, getString(R.string.user_not_logged_in), Toast.LENGTH_SHORT).show()
+            goToCustomerHome()
+            return
+        }
+
+        val formattedDate = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+            .format(Date(System.currentTimeMillis()))
+
+        val formattedFare = if (selectedPrice.contains("Rs", ignoreCase = true)) {
+            val amount = selectedPrice.replace("Rs", "", ignoreCase = true).trim()
+            "Rs $amount"
+        } else {
+            selectedPrice
+        }
+
+        val completedRide = hashMapOf(
+            "customerId" to currentUser.uid,
+            "driverName" to driverName,
+            "vehicleName" to vehicleName,
+            "vehicleNumber" to vehicleNumber,
+            "rideTime" to getString(R.string.wallet_default_ride_time),
+            "rideDistance" to getString(R.string.wallet_default_ride_distance),
+            "rideFare" to formattedFare,
+            "pickupLocation" to fromLocation,
+            "dropLocation" to toLocation,
+            "rideDate" to getString(R.string.wallet_date_prefix, formattedDate),
+            "paymentMethod" to getString(R.string.cash),
+            "status" to "completed",
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("completed_rides")
+            .add(completedRide)
+            .addOnSuccessListener {
+                Toast.makeText(this, getString(R.string.ride_saved_to_wallet), Toast.LENGTH_SHORT)
+                    .show()
+                goToCustomerHome()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, getString(R.string.failed_to_save_ride), Toast.LENGTH_SHORT)
+                    .show()
+                goToCustomerHome()
+            }
+    }
+
+    private fun goToCustomerHome() {
+        val intent = Intent(this, CustomerHomeActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+        finish()
     }
 
     private fun openCancelRidePage() {
@@ -341,13 +400,6 @@ class RideTrackingActivity : AppCompatActivity() {
                     saveSosAlertToFirestore(location.latitude, location.longitude)
                     openPoliceDialer()
                 }
-
-                @Deprecated("Deprecated in API 29")
-                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
-
-                override fun onProviderEnabled(provider: String) {}
-
-                override fun onProviderDisabled(provider: String) {}
             }
 
             val lastKnown = getLastKnownSafeLocation()
@@ -431,18 +483,10 @@ class RideTrackingActivity : AppCompatActivity() {
         db.collection("sos_alerts")
             .add(sosData)
             .addOnSuccessListener {
-                Toast.makeText(
-                    this,
-                    getString(R.string.sos_saved),
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, getString(R.string.sos_saved), Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
-                Toast.makeText(
-                    this,
-                    getString(R.string.sos_save_failed),
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, getString(R.string.sos_save_failed), Toast.LENGTH_SHORT).show()
             }
     }
 

@@ -27,7 +27,6 @@
         android:layout_marginBottom="18dp"
         android:orientation="vertical">
 
-        <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -98,7 +97,6 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Black panel -->
         <LinearLayout
             android:id="@+id/sideMenuPanel"
             android:layout_width="match_parent"
@@ -256,29 +254,6 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="18dp"
                         android:text="Settings"
-                        android:textColor="@android:color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/menuSafety"
-                    android:layout_width="wrap_content"
-                    android:layout_height="46dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_settings_blue_check" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="18dp"
-                        android:text="@string/safety"
                         android:textColor="@android:color/white"
                         android:textSize="16sp"
                         android:textStyle="bold" />

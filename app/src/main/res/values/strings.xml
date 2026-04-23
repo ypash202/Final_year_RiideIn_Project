@@ -199,11 +199,36 @@
     <string name="sos_saved">SOS alert saved with current trip details</string>
     <string name="sos_save_failed">SOS will continue even if alert save failed</string>
 
-
     <string name="system">System</string>
     <string name="promotion">Promotion</string>
     <string name="system_notification_text">Your booking #1234 has been suc...</string>
     <string name="promotion_notification_text">Invite friends - Get 3 coupons each!</string>
+    <string name="wallet_date_sample">Date: 23 Apr 2026</string>
+    <string name="payment_details">Payment details</string>
+
+    <string name="wallet_default_driver_name">Ram Gurung</string>
+    <string name="wallet_default_ride_time">Time: 30min</string>
+    <string name="wallet_default_ride_distance">Distance: 2.3km</string>
+    <string name="wallet_default_ride_date">Date: 23 Apr 2026</string>
+    <string name="wallet_default_ride_fare">NPR 200</string>
+    <string name="wallet_default_pickup">Boudha</string>
+    <string name="wallet_default_drop">Trade Tower, Thapathali</string>
+
+
+    <string name="invite_friends_text">Join me on Riide In. Download the app and start riding with ease!</string>
+    <string name="wallet_date_prefix">Date: %1$s</string>
+    <string name="user_not_logged_in">User not logged in</string>
+    <string name="ride_saved_to_wallet">Ride saved to wallet</string>
+    <string name="failed_to_save_ride">Failed to save ride</string>
+    <string name="wallet_total_rides_default">Total rides: 0</string>
+    <string name="wallet_total_spent_default">Total spent: NPR 0</string>
+    <string name="wallet_total_rides_format">Total rides: %1$d</string>
+    <string name="wallet_total_spent_format">Total spent: NPR %1$s</string>
+    <string name="wallet_empty_state">No completed rides yet.</string>
+    <string name="wallet_completed_rides">Completed rides list</string>
+    <string name="wallet_pickup_format">Pickup: %1$s</string>
+    <string name="wallet_drop_format">Drop: %1$s</string>
+
 
 </resources>
 
