@@ -11,94 +11,89 @@
         android:orientation="vertical"
         android:padding="30dp">
 
-        <!-- Logo -->
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="80dp"
             android:text="riide In"
             android:textColor="#63B7C4"
             android:textSize="42sp"
-            android:textStyle="bold"
-            android:layout_marginTop="80dp"/>
-
-        <!-- Welcome Text -->
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="Welcome to riide In"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:layout_marginTop="16dp"/>
-
-        <!-- Username Label -->
+            android:textSize="18sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
             android:text="USERNAME"
             android:textColor="#AAAAAA"
-            android:textSize="12sp"
-            android:layout_marginTop="40dp"/>
-
-        <!-- Username Input -->
+            android:textSize="12sp" />
 
         <EditText
             android:id="@+id/emailEdit"
             android:layout_width="match_parent"
             android:layout_height="50dp"
+            android:layout_marginTop="6dp"
             android:background="#151515"
-            android:hint="Enter email or username"
+            android:hint="Enter email"
+            android:padding="12dp"
             android:textColor="#FFFFFF"
             android:textColorHint="#777777"
-            android:padding="12dp"
-            android:layout_marginTop="6dp"/>
-
-        <!-- Password Label -->
+            android:inputType="textEmailAddress" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:text="PASSWORD"
             android:textColor="#AAAAAA"
-            android:textSize="12sp"
-            android:layout_marginTop="20dp"/>
-
-        <!-- Password Input -->
+            android:textSize="12sp" />
 
         <EditText
             android:id="@+id/passwordEdit"
             android:layout_width="match_parent"
             android:layout_height="50dp"
+            android:layout_marginTop="6dp"
             android:background="#151515"
             android:hint="Enter your password"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#777777"
+            android:inputType="textPassword"
             android:padding="12dp"
-            android:layout_marginTop="6dp"
-            android:inputType="textPassword"/>
+            android:textColor="#FFFFFF"
+            android:textColorHint="#777777" />
 
-        <!-- Sign In Button -->
+        <TextView
+            android:id="@+id/forgotPasswordLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="12dp"
+            android:text="Forgot Password?"
+            android:textColor="#63B7C4"
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/loginButton"
             android:layout_width="match_parent"
             android:layout_height="55dp"
-            android:layout_marginTop="35dp"
+            android:layout_marginTop="30dp"
+            android:backgroundTint="#63B7C4"
             android:text="Sign in"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#63B7C4"/>
-
-        <!-- Sign Up Link -->
+            android:textColor="#FFFFFF" />
 
         <TextView
             android:id="@+id/signupLink"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:text="Don't have an account? Sign up"
-            android:textColor="#63B7C4"
-            android:layout_marginTop="20dp"/>
+            android:textColor="#63B7C4" />
 
     </LinearLayout>
 

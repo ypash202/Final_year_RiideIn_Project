@@ -18,8 +18,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RiideIn">
 
+        <activity
+            android:name=".activities.ForgotPasswordActivity"
+            android:exported="false" />
         <activity android:name=".activities.NotificationsActivity" />
-
         <activity
             android:name=".activities.DriverWalletActivity"
             android:exported="false" />

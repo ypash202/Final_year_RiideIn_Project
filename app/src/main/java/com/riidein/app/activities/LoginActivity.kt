@@ -18,26 +18,21 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_login)
 
-        // Initialize Firebase
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        // Find views
         val emailEdit = findViewById<EditText>(R.id.emailEdit)
         val passwordEdit = findViewById<EditText>(R.id.passwordEdit)
         val loginButton = findViewById<Button>(R.id.loginButton)
         val signupLink = findViewById<TextView>(R.id.signupLink)
+        val forgotPasswordLink = findViewById<TextView>(R.id.forgotPasswordLink)
 
-        // LOGIN BUTTON
         loginButton.setOnClickListener {
-
             val email = emailEdit.text.toString().trim()
             val password = passwordEdit.text.toString().trim()
 
-            // Validation
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -48,10 +43,8 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Firebase Login
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
-
                     if (task.isSuccessful) {
                         val currentUser = auth.currentUser
 
@@ -65,11 +58,12 @@ class LoginActivity : AppCompatActivity() {
 
                                         if (role == "customer") {
                                             Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-                                            val intent = Intent(this, CustomerHomeActivity::class.java)
-                                            startActivity(intent)
+                                            startActivity(Intent(this, CustomerHomeActivity::class.java))
                                             finish()
-                                        } else {
+                                        } else if (role == "driver") {
                                             Toast.makeText(this, "Driver flow will be connected next", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(this, "Unknown user role", Toast.LENGTH_LONG).show()
                                         }
                                     } else {
                                         Toast.makeText(this, "User data not found in Firestore", Toast.LENGTH_LONG).show()
@@ -81,7 +75,6 @@ class LoginActivity : AppCompatActivity() {
                         } else {
                             Toast.makeText(this, "User not found after login", Toast.LENGTH_LONG).show()
                         }
-
                     } else {
                         Toast.makeText(
                             this,
@@ -92,10 +85,12 @@ class LoginActivity : AppCompatActivity() {
                 }
         }
 
-        // GO TO REGISTER
+        forgotPasswordLink.setOnClickListener {
+            startActivity(Intent(this, ForgotPasswordActivity::class.java))
+        }
+
         signupLink.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 }
