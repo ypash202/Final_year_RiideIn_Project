@@ -30,9 +30,17 @@ class DriverPhotoUploadActivity : AppCompatActivity() {
 
     private var driverPhotoUri: Uri? = null
 
-    private val galleryLauncher =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    private val openDocumentLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             if (uri != null) {
+                try {
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_: Exception) {
+                }
+
                 driverPhotoUri = uri
                 profilePreviewImage.setImageURI(uri)
                 profilePreviewImage.imageTintList = null
@@ -45,10 +53,15 @@ class DriverPhotoUploadActivity : AppCompatActivity() {
             if (result.resultCode == RESULT_OK) {
                 val bitmap = result.data?.extras?.get("data") as? Bitmap
                 if (bitmap != null) {
-                    driverPhotoUri = getImageUri(bitmap)
-                    profilePreviewImage.setImageBitmap(bitmap)
-                    profilePreviewImage.imageTintList = null
-                    Toast.makeText(this, "Photo captured successfully", Toast.LENGTH_SHORT).show()
+                    val uri = getImageUri(bitmap)
+                    if (uri != null) {
+                        driverPhotoUri = uri
+                        profilePreviewImage.setImageBitmap(bitmap)
+                        profilePreviewImage.imageTintList = null
+                        Toast.makeText(this, "Photo captured successfully", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Failed to save captured image", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
@@ -79,7 +92,7 @@ class DriverPhotoUploadActivity : AppCompatActivity() {
         }
 
         chooseLibraryCard.setOnClickListener {
-            galleryLauncher.launch("image/*")
+            openDocumentLauncher.launch(arrayOf("image/*"))
         }
 
         takePhotoCard.setOnClickListener {

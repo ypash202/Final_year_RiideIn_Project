@@ -1,119 +1,107 @@
 package com.riidein.app.activities
 
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.riidein.app.R
 
 class MessagesActivity : AppCompatActivity() {
 
-    private lateinit var deleteButton: ImageButton
+    private var userRole: String = "customer"
 
-    private lateinit var selectedDriverRow: LinearLayout
-    private lateinit var staticBinodRow: LinearLayout
-    private lateinit var staticSulavRow: LinearLayout
+    private lateinit var backButton: ImageButton
+    private lateinit var navHome: LinearLayout
+    private lateinit var navWallet: LinearLayout
+    private lateinit var navMessages: LinearLayout
 
-    private var selectedRow: LinearLayout? = null
-    private var selectedDriverNameForChat: String? = null
+    private lateinit var navHomeIcon: android.widget.ImageView
+    private lateinit var navWalletIcon: android.widget.ImageView
+    private lateinit var navMessagesIcon: android.widget.ImageView
+
+    private lateinit var navHomeText: TextView
+    private lateinit var navWalletText: TextView
+    private lateinit var navMessagesText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_messages)
 
-        val backButton = findViewById<ImageButton>(R.id.backButton)
-        deleteButton = findViewById(R.id.deleteButton)
+        userRole = intent.getStringExtra("user_role")?.trim()?.lowercase() ?: "customer"
 
-        selectedDriverRow = findViewById(R.id.selectedDriverRow)
-        staticBinodRow = findViewById(R.id.staticBinodRow)
-        staticSulavRow = findViewById(R.id.staticSulavRow)
+        backButton = findViewById(R.id.backButton)
+        navHome = findViewById(R.id.navHome)
+        navWallet = findViewById(R.id.navWallet)
+        navMessages = findViewById(R.id.navMessages)
 
-        val selectedDriverImage = findViewById<ImageView>(R.id.selectedDriverImage)
-        val selectedDriverNameText = findViewById<TextView>(R.id.selectedDriverNameText)
-        val selectedDriverMessageText = findViewById<TextView>(R.id.selectedDriverMessageText)
+        navHomeIcon = navHome.getChildAt(0) as android.widget.ImageView
+        navHomeText = navHome.getChildAt(1) as TextView
 
-        val driverName = intent.getStringExtra("driver_name") ?: "Binod"
+        navWalletIcon = navWallet.getChildAt(0) as android.widget.ImageView
+        navWalletText = navWallet.getChildAt(1) as TextView
 
-        selectedDriverNameText.text = driverName
-        selectedDriverMessageText.text = "I am on the way."
+        navMessagesIcon = navMessages.getChildAt(0) as android.widget.ImageView
+        navMessagesText = navMessages.getChildAt(1) as TextView
 
-        if (driverName.equals("Sulav", ignoreCase = true)) {
-            selectedDriverImage.setImageResource(R.drawable.profile2)
-        } else {
-            selectedDriverImage.setImageResource(R.drawable.profile1)
-        }
+        highlightSelectedTab("messages")
 
         backButton.setOnClickListener {
-            val intent = Intent(this, CustomerHomeActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
+            openSideMenu()
+        }
+
+        navHome.setOnClickListener {
+            highlightSelectedTab("home")
+            if (userRole == "driver") {
+                startActivity(Intent(this, DriverHomeActivity::class.java).apply {
+                    putExtra("user_role", "driver")
+                    putExtra("selected_tab", "home")
+                })
+            } else {
+                startActivity(Intent(this, CustomerHomeActivity::class.java).apply {
+                    putExtra("user_role", "customer")
+                    putExtra("selected_tab", "home")
+                })
+            }
             finish()
         }
 
-        deleteButton.setOnClickListener {
-            deleteSelectedMessage()
+        navWallet.setOnClickListener {
+            highlightSelectedTab("wallet")
+            startActivity(Intent(this, DriverWalletActivity::class.java).apply {
+                putExtra("user_role", userRole)
+                putExtra("selected_tab", "wallet")
+            })
+            finish()
         }
 
-        setupMessageRow(selectedDriverRow, driverName)
-        setupMessageRow(staticBinodRow, "Binod")
-        setupMessageRow(staticSulavRow, "Sulav")
-    }
-
-    private fun setupMessageRow(row: LinearLayout, driverName: String) {
-        row.setOnClickListener {
-            if (selectedRow == row) {
-                clearSelection()
-                openChatDetail(driverName)
-            } else {
-                openChatDetail(driverName)
-            }
-        }
-
-        row.setOnLongClickListener {
-            toggleSelection(row, driverName)
-            true
+        navMessages.setOnClickListener {
+            highlightSelectedTab("messages")
+            Toast.makeText(this, "Already on Messages", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun toggleSelection(row: LinearLayout, driverName: String) {
-        if (selectedRow == row) {
-            clearSelection()
-        } else {
-            clearSelection()
-            selectedRow = row
-            selectedDriverNameForChat = driverName
-            row.setBackgroundColor(Color.parseColor("#33FFFFFF"))
-            Toast.makeText(this, "$driverName selected", Toast.LENGTH_SHORT).show()
-        }
+    private fun openSideMenu() {
+        startActivity(Intent(this, SideMenuActivity::class.java).apply {
+            putExtra("user_role", userRole)
+            putExtra("selected_menu", "messages")
+        })
+        finish()
     }
 
-    private fun clearSelection() {
-        selectedRow?.setBackgroundColor(Color.TRANSPARENT)
-        selectedRow = null
-        selectedDriverNameForChat = null
-    }
+    private fun highlightSelectedTab(selectedTab: String) {
+        val selectedColor = ContextCompat.getColor(this, android.R.color.white)
+        val unselectedColor = ContextCompat.getColor(this, R.color.wallet_text_muted)
 
-    private fun deleteSelectedMessage() {
-        val rowToDelete = selectedRow
+        navHomeIcon.setColorFilter(if (selectedTab == "home") selectedColor else unselectedColor)
+        navWalletIcon.setColorFilter(if (selectedTab == "wallet") selectedColor else unselectedColor)
+        navMessagesIcon.setColorFilter(if (selectedTab == "messages") selectedColor else unselectedColor)
 
-        if (rowToDelete == null) {
-            Toast.makeText(this, "Long press a message to select it", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        rowToDelete.visibility = LinearLayout.GONE
-        Toast.makeText(this, "Message deleted", Toast.LENGTH_SHORT).show()
-        clearSelection()
-    }
-
-    private fun openChatDetail(driverName: String) {
-        val intent = Intent(this, chat_detail::class.java)
-        intent.putExtra("driver_name", driverName)
-        startActivity(intent)
+        navHomeText.setTextColor(if (selectedTab == "home") selectedColor else unselectedColor)
+        navWalletText.setTextColor(if (selectedTab == "wallet") selectedColor else unselectedColor)
+        navMessagesText.setTextColor(if (selectedTab == "messages") selectedColor else unselectedColor)
     }
 }

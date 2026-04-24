@@ -1,25 +1,43 @@
 package com.riidein.app.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import com.riidein.app.R
 
 class NotificationsActivity : AppCompatActivity() {
+
+    private var userRole: String = "customer"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_notifications)
 
-        val backButton = findViewById<ImageButton>(R.id.backButton)
-        val deleteButton = findViewById<ImageButton>(R.id.deleteButton)
+        userRole = intent.getStringExtra("user_role")?.trim()?.lowercase() ?: "customer"
 
-        backButton.setOnClickListener {
-            finish()
+        val backButton = findViewById<ImageButton?>(R.id.backButton)
+        val closeButton = findViewById<ImageButton?>(R.id.closeButton)
+
+        backButton?.setOnClickListener {
+            openSideMenu("notifications")
         }
 
-        deleteButton.setOnClickListener {
+        closeButton?.setOnClickListener {
+            FirebaseAuth.getInstance().signOut()
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
             finish()
         }
+    }
+
+    private fun openSideMenu(selectedMenu: String) {
+        startActivity(Intent(this, SideMenuActivity::class.java).apply {
+            putExtra("user_role", userRole)
+            putExtra("selected_menu", selectedMenu)
+        })
+        finish()
     }
 }

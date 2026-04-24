@@ -12,6 +12,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -38,11 +39,21 @@ class DriverWalletActivity : AppCompatActivity() {
     private lateinit var navWallet: LinearLayout
     private lateinit var navMessages: LinearLayout
 
+    private lateinit var navHomeIcon: ImageView
+    private lateinit var navWalletIcon: ImageView
+    private lateinit var navMessagesIcon: ImageView
+
+    private lateinit var navHomeText: TextView
+    private lateinit var navWalletText: TextView
+    private lateinit var navMessagesText: TextView
+
     private lateinit var completeRideButton: Button
     private lateinit var ridesContainer: LinearLayout
     private lateinit var emptyStateText: TextView
     private lateinit var totalRidesText: TextView
     private lateinit var totalSpentText: TextView
+
+    private var userRole: String = USER_ROLE_DRIVER
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +71,7 @@ class DriverWalletActivity : AppCompatActivity() {
 
         initViews()
 
-        val userRole = intent.getStringExtra(EXTRA_USER_ROLE) ?: USER_ROLE_DRIVER
+        userRole = intent.getStringExtra(EXTRA_USER_ROLE)?.trim()?.lowercase() ?: USER_ROLE_DRIVER
 
         if (userRole == USER_ROLE_CUSTOMER) {
             showCustomerWallet()
@@ -68,7 +79,8 @@ class DriverWalletActivity : AppCompatActivity() {
             showDriverWallet()
         }
 
-        setupClicks(userRole)
+        highlightSelectedTab(TAB_WALLET)
+        setupClicks()
     }
 
     private fun initViews() {
@@ -82,6 +94,15 @@ class DriverWalletActivity : AppCompatActivity() {
         navHome = findViewById(R.id.navHome)
         navWallet = findViewById(R.id.navWallet)
         navMessages = findViewById(R.id.navMessages)
+
+        navHomeIcon = navHome.getChildAt(0) as ImageView
+        navHomeText = navHome.getChildAt(1) as TextView
+
+        navWalletIcon = navWallet.getChildAt(0) as ImageView
+        navWalletText = navWallet.getChildAt(1) as TextView
+
+        navMessagesIcon = navMessages.getChildAt(0) as ImageView
+        navMessagesText = navMessages.getChildAt(1) as TextView
 
         completeRideButton = findViewById(R.id.completeRideButton)
         ridesContainer = findViewById(R.id.ridesContainer)
@@ -97,10 +118,6 @@ class DriverWalletActivity : AppCompatActivity() {
         titleText.visibility = View.VISIBLE
 
         bottomNav.visibility = View.GONE
-        navHome.visibility = View.GONE
-        navWallet.visibility = View.GONE
-        navMessages.visibility = View.GONE
-
         completeRideButton.text = getString(R.string.payment_details)
         loadAllCompletedRides()
     }
@@ -112,11 +129,72 @@ class DriverWalletActivity : AppCompatActivity() {
         titleText.visibility = View.GONE
 
         bottomNav.visibility = View.VISIBLE
-        navHome.visibility = View.VISIBLE
-        navWallet.visibility = View.VISIBLE
-        navMessages.visibility = View.VISIBLE
-
         completeRideButton.text = getString(R.string.complete_ride)
+    }
+
+    private fun setupClicks() {
+        backButton.setOnClickListener {
+            openSideMenu()
+        }
+
+        if (userRole != USER_ROLE_CUSTOMER) {
+            navHome.setOnClickListener {
+                highlightSelectedTab(TAB_HOME)
+                openHomeByRole()
+            }
+
+            navWallet.setOnClickListener {
+                highlightSelectedTab(TAB_WALLET)
+                Toast.makeText(this, "Already on Wallet", Toast.LENGTH_SHORT).show()
+            }
+
+            navMessages.setOnClickListener {
+                highlightSelectedTab(TAB_MESSAGES)
+                startActivity(Intent(this, MessagesActivity::class.java).apply {
+                    putExtra(EXTRA_USER_ROLE, userRole)
+                    putExtra("selected_tab", "messages")
+                })
+                finish()
+            }
+        }
+    }
+
+    private fun openSideMenu() {
+        startActivity(Intent(this, SideMenuActivity::class.java).apply {
+            putExtra("user_role", userRole)
+            putExtra("selected_menu", "wallet")
+        })
+        finish()
+    }
+
+    private fun highlightSelectedTab(selectedTab: String) {
+        val selectedColor = ContextCompat.getColor(this, android.R.color.white)
+        val unselectedColor = ContextCompat.getColor(this, R.color.wallet_text_muted)
+
+        navHomeIcon.setColorFilter(if (selectedTab == TAB_HOME) selectedColor else unselectedColor)
+        navWalletIcon.setColorFilter(if (selectedTab == TAB_WALLET) selectedColor else unselectedColor)
+        navMessagesIcon.setColorFilter(if (selectedTab == TAB_MESSAGES) selectedColor else unselectedColor)
+
+        navHomeText.setTextColor(if (selectedTab == TAB_HOME) selectedColor else unselectedColor)
+        navWalletText.setTextColor(if (selectedTab == TAB_WALLET) selectedColor else unselectedColor)
+        navMessagesText.setTextColor(if (selectedTab == TAB_MESSAGES) selectedColor else unselectedColor)
+
+        navHomeText.setTypeface(null, if (selectedTab == TAB_HOME) Typeface.BOLD else Typeface.NORMAL)
+        navWalletText.setTypeface(null, if (selectedTab == TAB_WALLET) Typeface.BOLD else Typeface.NORMAL)
+        navMessagesText.setTypeface(null, if (selectedTab == TAB_MESSAGES) Typeface.BOLD else Typeface.NORMAL)
+    }
+
+    private fun openHomeByRole() {
+        val intent = if (userRole == USER_ROLE_DRIVER) {
+            Intent(this, DriverHomeActivity::class.java)
+        } else {
+            Intent(this, CustomerHomeActivity::class.java)
+        }
+        intent.putExtra(EXTRA_USER_ROLE, userRole)
+        intent.putExtra("selected_tab", "home")
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        startActivity(intent)
+        finish()
     }
 
     private fun loadAllCompletedRides() {
@@ -303,35 +381,15 @@ class DriverWalletActivity : AppCompatActivity() {
         )
     }
 
-    private fun setupClicks(userRole: String) {
-        backButton.setOnClickListener {
-            finish()
-        }
-
-        if (userRole != USER_ROLE_CUSTOMER) {
-            navHome.setOnClickListener {
-                startActivity(Intent(this, CustomerHomeActivity::class.java))
-                finish()
-            }
-
-            navWallet.setOnClickListener {
-                // already on wallet page
-            }
-
-            navMessages.setOnClickListener {
-                val intent = Intent(this, MessagesActivity::class.java)
-                intent.putExtra(EXTRA_DRIVER_NAME, "")
-                startActivity(intent)
-            }
-        }
-    }
-
     companion object {
         private const val EXTRA_USER_ROLE = "user_role"
-        private const val EXTRA_DRIVER_NAME = "driver_name"
 
         private const val USER_ROLE_CUSTOMER = "customer"
         private const val USER_ROLE_DRIVER = "driver"
+
+        private const val TAB_HOME = "home"
+        private const val TAB_WALLET = "wallet"
+        private const val TAB_MESSAGES = "messages"
 
         private const val COLLECTION_COMPLETED_RIDES = "completed_rides"
 

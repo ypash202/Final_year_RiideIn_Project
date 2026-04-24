@@ -46,10 +46,17 @@ class CustomerHomeActivity : AppCompatActivity() {
         }
 
         menuButton.setOnClickListener {
-            startActivity(Intent(this@CustomerHomeActivity, SideMenuActivity::class.java))
+            startActivity(Intent(this@CustomerHomeActivity, SideMenuActivity::class.java).apply {
+                putExtra("user_role", "customer")
+                putExtra("selected_menu", "home")
+            })
         }
 
         closeButton.setOnClickListener {
+            FirebaseAuth.getInstance().signOut()
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
             finish()
         }
 

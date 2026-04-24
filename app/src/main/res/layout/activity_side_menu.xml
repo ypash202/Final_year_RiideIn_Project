@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".activities.SideMenuActivity">
+    android:layout_height="match_parent">
 
     <ImageView
         android:id="@+id/mapBackground"
@@ -22,7 +20,7 @@
     <LinearLayout
         android:layout_width="340dp"
         android:layout_height="match_parent"
-        android:layout_marginStart="30dp"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="32dp"
         android:layout_marginBottom="18dp"
         android:orientation="vertical">
@@ -63,11 +61,7 @@
                     android:id="@+id/userName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:shadowColor="#CC000000"
-                    android:shadowDx="0"
-                    android:shadowDy="1"
-                    android:shadowRadius="2"
-                    android:text="Ram Rai"
+                    android:text="User"
                     android:textColor="#FFFFFFFF"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -86,6 +80,7 @@
                         app:tint="#FFD54A" />
 
                     <TextView
+                        android:id="@+id/ratingText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
@@ -105,9 +100,9 @@
             android:layout_weight="1"
             android:background="#E6000000"
             android:orientation="vertical"
-            android:paddingStart="18dp"
+            android:paddingStart="12dp"
             android:paddingTop="22dp"
-            android:paddingEnd="18dp"
+            android:paddingEnd="12dp"
             android:paddingBottom="18dp">
 
             <LinearLayout
@@ -118,10 +113,13 @@
 
                 <LinearLayout
                     android:id="@+id/menuHome"
-                    android:layout_width="wrap_content"
-                    android:layout_height="46dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="2dp"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
 
                     <ImageView
                         android:layout_width="22dp"
@@ -135,17 +133,19 @@
                         android:layout_marginStart="18dp"
                         android:text="Home"
                         android:textColor="@android:color/white"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/menuWallet"
-                    android:layout_width="wrap_content"
-                    android:layout_height="46dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
                     android:layout_marginTop="10dp"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
 
                     <ImageView
                         android:layout_width="22dp"
@@ -159,17 +159,45 @@
                         android:layout_marginStart="18dp"
                         android:text="My Wallet"
                         android:textColor="@android:color/white"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/menuMessages"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@android:drawable/ic_dialog_email"
+                        app:tint="#63D8F2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="18dp"
+                        android:text="Messages"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/menuHistory"
-                    android:layout_width="wrap_content"
-                    android:layout_height="46dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
                     android:layout_marginTop="10dp"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
 
                     <ImageView
                         android:layout_width="22dp"
@@ -183,17 +211,19 @@
                         android:layout_marginStart="18dp"
                         android:text="History"
                         android:textColor="@android:color/white"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/menuNotifications"
-                    android:layout_width="wrap_content"
-                    android:layout_height="46dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
                     android:layout_marginTop="10dp"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
 
                     <ImageView
                         android:layout_width="22dp"
@@ -207,17 +237,19 @@
                         android:layout_marginStart="18dp"
                         android:text="Notifications"
                         android:textColor="@android:color/white"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/menuInvite"
-                    android:layout_width="wrap_content"
-                    android:layout_height="46dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
                     android:layout_marginTop="10dp"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
 
                     <ImageView
                         android:layout_width="22dp"
@@ -231,17 +263,19 @@
                         android:layout_marginStart="18dp"
                         android:text="Invite Friends"
                         android:textColor="@android:color/white"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/menuSettings"
-                    android:layout_width="wrap_content"
-                    android:layout_height="46dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
                     android:layout_marginTop="10dp"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
 
                     <ImageView
                         android:layout_width="22dp"
@@ -255,17 +289,19 @@
                         android:layout_marginStart="18dp"
                         android:text="Settings"
                         android:textColor="@android:color/white"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/menuLogout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="46dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
                     android:layout_marginTop="10dp"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
 
                     <ImageView
                         android:layout_width="22dp"
@@ -279,7 +315,7 @@
                         android:layout_marginStart="18dp"
                         android:text="Logout"
                         android:textColor="@android:color/white"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 

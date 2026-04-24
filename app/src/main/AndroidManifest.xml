@@ -18,100 +18,132 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RiideIn">
 
-
-        <activity android:name=".activities.DriverHomeActivity" android:exported="false" />
-        <activity
-            android:name=".activities.ForgotPasswordActivity"
-            android:exported="false" />
-        <activity android:name=".activities.NotificationsActivity" />
-        <activity
-            android:name=".activities.DriverWalletActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.RideCompleteActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.DriverArrivedNavigateActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.DriverNavigateRequestActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.DriverRideRequestActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.DriverSideMenuActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.VerificationCompleteActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.DriverPhotoUploadActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.DriverLicenceNumberActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.DriverCitizenshipUploadActivity"
-            android:exported="false" />
         <activity
             android:name=".activities.HistoryActivity"
             android:exported="false" />
+
         <activity
-            android:name=".activities.MyAccountActivity"
+            android:name=".activities.NotificationsActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.settings"
             android:exported="false" />
+
+        <activity
+            android:name=".activities.DriverHomeActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ForgotPasswordActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.DriverWalletActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.RideCompleteActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.DriverArrivedNavigateActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.DriverNavigateRequestActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.DriverRideRequestActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.DriverSideMenuActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.VerificationCompleteActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.DriverPhotoUploadActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.DriverLicenceNumberActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.DriverCitizenshipUploadActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.MyAccountActivity"
+            android:exported="false" />
+
         <activity
             android:name=".activities.SideMenuActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.chat_detail"
             android:exported="false" />
+
         <activity
             android:name=".activities.MessagesActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.RideTrackingActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.CancelRideActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.ChooseDriverActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.VehicleSelectionActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.EnterRouteActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".activities.OtpActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.RegisterActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.LoginActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.MainActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.CustomerHomeActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.OnboardingActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>
