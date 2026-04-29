@@ -22,10 +22,15 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
     private var dropLocation = ""
     private var fare = ""
     private var vehicleType = ""
+    private var driverArrived = false
+
+    private lateinit var arrivedButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_driver_arrived_navigate)
+
+        arrivedButton = findViewById(R.id.arrivedButton)
 
         readIntentData()
         bindData()
@@ -48,20 +53,22 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.fareText).text = fare
 
         val vehicleInfoTop = findViewById<TextView>(R.id.vehicleInfoTop)
-        val bikeImage = findViewById<ImageView>(R.id.bikeImage)
+        val vehicleImage = findViewById<ImageView>(R.id.bikeImage)
 
         when (vehicleType.trim().lowercase()) {
             "cab" -> {
                 vehicleInfoTop.text = "CAB"
-                bikeImage.setImageResource(R.drawable.car)
+                vehicleImage.setImageResource(R.drawable.car)
             }
+
             "delivery" -> {
                 vehicleInfoTop.text = "DELIVERY"
-                bikeImage.setImageResource(R.drawable.delivery)
+                vehicleImage.setImageResource(R.drawable.delivery)
             }
+
             else -> {
                 vehicleInfoTop.text = "MOTOR-BIKE"
-                bikeImage.setImageResource(R.drawable.bike)
+                vehicleImage.setImageResource(R.drawable.bike)
             }
         }
     }
@@ -79,8 +86,12 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
             openNavigationToCustomer()
         }
 
-        findViewById<Button>(R.id.arrivedButton).setOnClickListener {
-            markDriverArrived()
+        arrivedButton.setOnClickListener {
+            if (!driverArrived) {
+                markDriverArrived()
+            } else {
+                completeRide()
+            }
         }
     }
 
@@ -107,7 +118,6 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
     private fun markDriverArrived() {
         if (requestId.isBlank()) {
             Toast.makeText(this, "Ride request not found", Toast.LENGTH_SHORT).show()
-
             return
         }
 
@@ -115,13 +125,35 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
             .document(requestId)
             .update("status", "arrived")
             .addOnSuccessListener {
-                Toast.makeText(this, "Customer has been notified", Toast.LENGTH_SHORT).show()
-                val arrivedButton = findViewById<Button>(R.id.arrivedButton)
-                arrivedButton.isEnabled = false
-                arrivedButton.alpha = 0.5f
+                driverArrived = true
+                arrivedButton.text = "Complete Ride"
+
+                Toast.makeText(
+                    this,
+                    "Customer has been notified. Complete the ride after drop-off.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to update arrival status", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun completeRide() {
+        if (requestId.isBlank()) {
+            Toast.makeText(this, "Ride request not found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        db.collection("ride_requests")
+            .document(requestId)
+            .update("status", "completed")
+            .addOnSuccessListener {
+                Toast.makeText(this, "Ride completed successfully", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to complete ride", Toast.LENGTH_SHORT).show()
             }
     }
 }
