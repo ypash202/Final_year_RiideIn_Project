@@ -6,7 +6,10 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.riidein.app.R
 
 class ChooseDriverActivity : AppCompatActivity() {
@@ -32,10 +35,16 @@ class ChooseDriverActivity : AppCompatActivity() {
     private lateinit var declineButton2: Button
     private lateinit var cancelRequestButton: Button
 
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+
     private var fromLocation: String = "Current Location"
     private var toLocation: String = "Destination"
     private var selectedVehicle: String = "Moto"
     private var selectedPrice: String = "Rs 0"
+
+    private val driverIds = mutableListOf<String>()
+    private val driverNames = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +53,8 @@ class ChooseDriverActivity : AppCompatActivity() {
         readIntentData()
         initViews()
         bindMapTexts()
-        bindDriverData()
+        hideDriverCards()
+        loadAvailableDrivers()
         setupButtons()
     }
 
@@ -83,27 +93,67 @@ class ChooseDriverActivity : AppCompatActivity() {
         toMapText.text = shortenPlaceName(toLocation, 18)
     }
 
-    private fun bindDriverData() {
-        driver1NameText.text = "Binod"
-        driver2NameText.text = "Sulav"
-
-        driver1VehicleText.text = buildVehicleText(selectedVehicle, "Honda")
-        driver2VehicleText.text = buildVehicleText(selectedVehicle, "Bajaj")
-
-        driver1PriceText.text = selectedPrice
-        driver2PriceText.text = selectedPrice
-
-        driver1TimeText.text = "1 min"
-        driver2TimeText.text = "2 min"
+    private fun hideDriverCards() {
+        driverCard1.visibility = View.GONE
+        driverCard2.visibility = View.GONE
     }
 
-    private fun buildVehicleText(vehicleType: String, brand: String): String {
-        return when (vehicleType.trim().lowercase()) {
-            "moto" -> "MOTOR-BIKE $brand"
-            "cab" -> "CAB $brand"
-            "delivery" -> "DELIVERY $brand"
-            else -> "$vehicleType $brand"
+    private fun loadAvailableDrivers() {
+        val vehicleType = when (selectedVehicle.trim().lowercase()) {
+            "moto" -> "bike"
+            "cab" -> "cab"
+            else -> "delivery"
         }
+
+        db.collection("users")
+            .whereEqualTo("role", "driver")
+            .whereEqualTo("vehicleType", vehicleType)
+            .whereEqualTo("isAvailable", true)
+            .whereEqualTo("verificationStatus", "approved")
+            .limit(2)
+            .get()
+            .addOnSuccessListener { result ->
+                driverIds.clear()
+                driverNames.clear()
+
+                if (result.isEmpty) {
+                    Toast.makeText(this, "No available $selectedVehicle driver found", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
+
+                val drivers = result.documents
+
+                if (drivers.isNotEmpty()) {
+                    val driver = drivers[0]
+                    val name = driver.getString("name") ?: "Driver"
+
+                    driverIds.add(driver.id)
+                    driverNames.add(name)
+
+                    driver1NameText.text = name
+                    driver1VehicleText.text = buildVehicleText(selectedVehicle)
+                    driver1PriceText.text = selectedPrice
+                    driver1TimeText.text = "1 min"
+                    driverCard1.visibility = View.VISIBLE
+                }
+
+                if (drivers.size > 1) {
+                    val driver = drivers[1]
+                    val name = driver.getString("name") ?: "Driver"
+
+                    driverIds.add(driver.id)
+                    driverNames.add(name)
+
+                    driver2NameText.text = name
+                    driver2VehicleText.text = buildVehicleText(selectedVehicle)
+                    driver2PriceText.text = selectedPrice
+                    driver2TimeText.text = "2 min"
+                    driverCard2.visibility = View.VISIBLE
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to load drivers", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun setupButtons() {
@@ -123,22 +173,89 @@ class ChooseDriverActivity : AppCompatActivity() {
         }
 
         acceptButton1.setOnClickListener {
-            openRideTracking(driver1NameText.text.toString())
+            if (driverIds.isNotEmpty()) {
+                sendRideRequest(driverIds[0], driverNames[0])
+            }
         }
 
         acceptButton2.setOnClickListener {
-            openRideTracking(driver2NameText.text.toString())
+            if (driverIds.size > 1) {
+                sendRideRequest(driverIds[1], driverNames[1])
+            }
         }
     }
 
-    private fun openRideTracking(driverName: String) {
-        val intent = Intent(this, RideTrackingActivity::class.java)
-        intent.putExtra("driver_name", driverName)
-        intent.putExtra("vehicle_name", selectedVehicle)
-        intent.putExtra("selected_price", selectedPrice)
-        intent.putExtra("from_location", fromLocation)
-        intent.putExtra("to_location", toLocation)
-        startActivity(intent)
+    private fun sendRideRequest(driverId: String, driverName: String) {
+        val currentUser = auth.currentUser
+
+        if (currentUser == null) {
+            Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        db.collection("users")
+            .document(currentUser.uid)
+            .get()
+            .addOnSuccessListener { userDoc ->
+                val customerName = userDoc.getString("name") ?: "Customer"
+
+                val request = hashMapOf(
+                    "customerId" to currentUser.uid,
+                    "customerName" to customerName,
+                    "driverId" to driverId,
+                    "driverName" to driverName,
+                    "vehicleType" to selectedVehicle,
+                    "pickup" to fromLocation,
+                    "drop" to toLocation,
+                    "fare" to selectedPrice,
+                    "status" to "pending",
+                    "createdAt" to System.currentTimeMillis()
+                )
+
+                db.collection("ride_requests")
+                    .add(request)
+                    .addOnSuccessListener { document ->
+                        Toast.makeText(this, "Ride request sent to $driverName", Toast.LENGTH_SHORT).show()
+                        listenForDriverAccept(document.id, driverName)
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Failed to send request", Toast.LENGTH_SHORT).show()
+                    }
+            }
+    }
+
+    private fun listenForDriverAccept(requestId: String, driverName: String) {
+        db.collection("ride_requests")
+            .document(requestId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
+
+                val status = snapshot.getString("status") ?: ""
+
+                if (status == "accepted") {
+                    val intent = Intent(this, RideTrackingActivity::class.java)
+                    intent.putExtra("driver_name", driverName)
+                    intent.putExtra("vehicle_name", selectedVehicle)
+                    intent.putExtra("selected_price", selectedPrice)
+                    intent.putExtra("from_location", fromLocation)
+                    intent.putExtra("to_location", toLocation)
+                    startActivity(intent)
+                    finish()
+                }
+
+                if (status == "declined") {
+                    Toast.makeText(this, "$driverName declined your request", Toast.LENGTH_SHORT).show()
+                }
+            }
+    }
+
+    private fun buildVehicleText(vehicleType: String): String {
+        return when (vehicleType.trim().lowercase()) {
+            "moto" -> "MOTOR-BIKE"
+            "cab" -> "CAB"
+            "delivery" -> "DELIVERY"
+            else -> vehicleType
+        }
     }
 
     private fun shortenPlaceName(place: String, maxLength: Int): String {

@@ -9,9 +9,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.riidein.app.R
 
 class DriverHomeActivity : AppCompatActivity() {
+
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,15 +24,11 @@ class DriverHomeActivity : AppCompatActivity() {
         val menuButton = findViewById<ImageButton>(R.id.menuButton)
         val closeButton = findViewById<ImageButton>(R.id.closeButton)
         val goOnlineButton = findViewById<Button>(R.id.goOnlineButton)
-
-        val motoOption = findViewById<LinearLayout>(R.id.motoOption)
-        val cabOption = findViewById<LinearLayout>(R.id.cabOption)
-        val deliveryOption = findViewById<LinearLayout>(R.id.deliveryOption)
+        val statusText = findViewById<TextView>(R.id.statusText)
 
         val navHome = findViewById<LinearLayout>(R.id.navHome)
         val navWallet = findViewById<LinearLayout>(R.id.navWallet)
         val navMessages = findViewById<LinearLayout>(R.id.navMessages)
-        val statusText = findViewById<TextView>(R.id.statusText)
 
         menuButton.setOnClickListener {
             startActivity(Intent(this, SideMenuActivity::class.java).apply {
@@ -38,7 +38,7 @@ class DriverHomeActivity : AppCompatActivity() {
         }
 
         closeButton.setOnClickListener {
-            FirebaseAuth.getInstance().signOut()
+            auth.signOut()
             val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
@@ -46,20 +46,24 @@ class DriverHomeActivity : AppCompatActivity() {
         }
 
         goOnlineButton.setOnClickListener {
-            statusText.text = "You are online"
-            Toast.makeText(this, "Driver is now online", Toast.LENGTH_SHORT).show()
-        }
+            val currentUser = auth.currentUser
 
-        motoOption.setOnClickListener {
-            Toast.makeText(this, "Moto selected", Toast.LENGTH_SHORT).show()
-        }
+            if (currentUser == null) {
+                Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-        cabOption.setOnClickListener {
-            Toast.makeText(this, "Cab selected", Toast.LENGTH_SHORT).show()
-        }
-
-        deliveryOption.setOnClickListener {
-            Toast.makeText(this, "Delivery selected", Toast.LENGTH_SHORT).show()
+            db.collection("users")
+                .document(currentUser.uid)
+                .update("isAvailable", true)
+                .addOnSuccessListener {
+                    statusText.text = "You are online"
+                    Toast.makeText(this, "Driver is now online", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, DriverRideRequestActivity::class.java))
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Failed to go online", Toast.LENGTH_SHORT).show()
+                }
         }
 
         navHome.setOnClickListener {

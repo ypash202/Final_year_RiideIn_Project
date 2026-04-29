@@ -124,7 +124,7 @@ class SideMenuActivity : AppCompatActivity() {
         }
 
         menuSettings.setOnClickListener {
-            startActivity(Intent(this, settings::class.java).apply {
+            startActivity(Intent(this, Settings::class.java).apply {
                 putExtra("user_role", userRole)
                 putExtra("selected_menu", "settings")
             })
