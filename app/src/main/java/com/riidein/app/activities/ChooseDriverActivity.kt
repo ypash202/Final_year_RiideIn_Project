@@ -234,6 +234,7 @@ class ChooseDriverActivity : AppCompatActivity() {
 
                 if (status == "accepted") {
                     val intent = Intent(this, RideTrackingActivity::class.java)
+                    intent.putExtra("request_id", requestId)
                     intent.putExtra("driver_name", driverName)
                     intent.putExtra("vehicle_name", selectedVehicle)
                     intent.putExtra("selected_price", selectedPrice)

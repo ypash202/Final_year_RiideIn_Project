@@ -60,9 +60,12 @@ class RideTrackingActivity : AppCompatActivity() {
 
     private var requestId: String = ""
     private var driverHasArrived = false
+    private var completedRideSaved = false
+
     private enum class RideState {
         ARRIVING,
         ARRIVED,
+        IN_PROGRESS,
         COMPLETED
     }
 
@@ -101,7 +104,7 @@ class RideTrackingActivity : AppCompatActivity() {
         updateRideStateUI()
         setupClicks()
         disableNextUntilDriverArrives()
-        listenForDriverArrival()
+        listenForRideStatus()
     }
 
     private fun initViews() {
@@ -126,8 +129,8 @@ class RideTrackingActivity : AppCompatActivity() {
     }
 
     private fun readIntentData() {
-
         requestId = intent.getStringExtra("request_id") ?: ""
+
         driverName = intent.getStringExtra("driver_name") ?: "Binod"
         vehicleName = intent.getStringExtra("vehicle_name") ?: "Moto"
         vehicleNumber = intent.getStringExtra("vehicle_number") ?: when (driverName.lowercase()) {
@@ -187,45 +190,59 @@ class RideTrackingActivity : AppCompatActivity() {
             when (currentRideState) {
                 RideState.ARRIVING -> openCancelRidePage()
 
-                RideState.ARRIVED -> {
-                    currentRideState = RideState.COMPLETED
-                    updateRideStateUI()
+                RideState.ARRIVED -> startRideForCustomer()
+
+                RideState.IN_PROGRESS -> {
                     Toast.makeText(
                         this,
-                        getString(R.string.ride_completed_demo),
+                        "You are on a ride. The driver will complete it after drop-off.",
                         Toast.LENGTH_SHORT
                     ).show()
-                    saveCompletedRideToFirestore()
                 }
 
-                RideState.COMPLETED -> {
-                    goToCustomerHome()
-                }
+                RideState.COMPLETED -> goToCustomerHome()
             }
         }
 
         nextArrow.setOnClickListener {
             when (currentRideState) {
                 RideState.ARRIVING -> {
-                    currentRideState = RideState.ARRIVED
-                    updateRideStateUI()
+                    Toast.makeText(
+                        this,
+                        "Please wait until your driver arrives.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
 
-                RideState.ARRIVED -> {
-                    currentRideState = RideState.COMPLETED
-                    updateRideStateUI()
-                    saveCompletedRideToFirestore()
+                RideState.ARRIVED -> startRideForCustomer()
+
+                RideState.IN_PROGRESS -> {
+                    Toast.makeText(
+                        this,
+                        "You are on a ride. Please wait until the driver completes the ride.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
 
-                RideState.COMPLETED -> {
-                    goToCustomerHome()
-                }
+                RideState.COMPLETED -> goToCustomerHome()
             }
         }
 
         sosButton.setOnClickListener {
             showSosDialog()
         }
+    }
+
+    private fun startRideForCustomer() {
+        currentRideState = RideState.IN_PROGRESS
+        updateRideStateUI()
+        disableNextUntilDriverCompletes()
+
+        Toast.makeText(
+            this,
+            "Ride started. You are now on your trip.",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     private fun updateRideStateUI() {
@@ -242,8 +259,20 @@ class RideTrackingActivity : AppCompatActivity() {
             }
 
             RideState.ARRIVED -> {
-                arrivalTitle.text = getString(R.string.ride_state_arrived)
-                cancelRideButton.text = getString(R.string.start_ride)
+                arrivalTitle.text = "Your driver has arrived"
+                cancelRideButton.text = "Start Ride"
+                contactDriverRow.visibility = LinearLayout.VISIBLE
+                nextArrow.visibility = ImageView.VISIBLE
+                sosButton.visibility = Button.VISIBLE
+                paymentLabel.visibility = TextView.VISIBLE
+                paymentAmountText.visibility = TextView.VISIBLE
+                paymentMethodText.visibility = TextView.VISIBLE
+            }
+
+            RideState.IN_PROGRESS -> {
+                arrivalTitle.text = "You are on a ride"
+                cancelRideButton.text = "Ride in progress"
+                cancelRideButton.isEnabled = false
                 contactDriverRow.visibility = LinearLayout.VISIBLE
                 nextArrow.visibility = ImageView.VISIBLE
                 sosButton.visibility = Button.VISIBLE
@@ -255,6 +284,7 @@ class RideTrackingActivity : AppCompatActivity() {
             RideState.COMPLETED -> {
                 arrivalTitle.text = getString(R.string.ride_state_completed)
                 cancelRideButton.text = getString(R.string.back_to_home)
+                cancelRideButton.isEnabled = true
                 contactDriverRow.visibility = LinearLayout.GONE
                 nextArrow.visibility = ImageView.GONE
                 sosButton.visibility = Button.GONE
@@ -263,6 +293,63 @@ class RideTrackingActivity : AppCompatActivity() {
                 paymentMethodText.visibility = TextView.VISIBLE
             }
         }
+    }
+
+    private fun disableNextUntilDriverArrives() {
+        nextArrow.isEnabled = false
+        nextArrow.alpha = 0.4f
+    }
+
+    private fun enableNextAfterDriverArrives() {
+        nextArrow.isEnabled = true
+        nextArrow.alpha = 1f
+    }
+
+    private fun disableNextUntilDriverCompletes() {
+        nextArrow.isEnabled = false
+        nextArrow.alpha = 0.4f
+    }
+
+    private fun listenForRideStatus() {
+        if (requestId.isEmpty()) {
+            Toast.makeText(this, "Request ID missing", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        db.collection("ride_requests")
+            .document(requestId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
+
+                val status = snapshot.getString("status") ?: ""
+
+                if (status == "arrived" && !driverHasArrived) {
+                    driverHasArrived = true
+                    currentRideState = RideState.ARRIVED
+                    updateRideStateUI()
+                    enableNextAfterDriverArrives()
+
+                    Toast.makeText(
+                        this,
+                        "Your driver has arrived. You can start the ride now.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+                if (status == "completed" && !completedRideSaved) {
+                    completedRideSaved = true
+                    currentRideState = RideState.COMPLETED
+                    updateRideStateUI()
+
+                    Toast.makeText(
+                        this,
+                        "Ride completed successfully. You can return home now.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    saveCompletedRideToFirestore()
+                }
+            }
     }
 
     private fun saveCompletedRideToFirestore() {
@@ -304,12 +391,10 @@ class RideTrackingActivity : AppCompatActivity() {
             .addOnSuccessListener {
                 Toast.makeText(this, getString(R.string.ride_saved_to_wallet), Toast.LENGTH_SHORT)
                     .show()
-                goToCustomerHome()
             }
             .addOnFailureListener {
                 Toast.makeText(this, getString(R.string.failed_to_save_ride), Toast.LENGTH_SHORT)
                     .show()
-                goToCustomerHome()
             }
     }
 
@@ -458,6 +543,7 @@ class RideTrackingActivity : AppCompatActivity() {
                 gpsLocation != null && networkLocation != null -> {
                     if (gpsLocation.time >= networkLocation.time) gpsLocation else networkLocation
                 }
+
                 gpsLocation != null -> gpsLocation
                 else -> networkLocation
             }
@@ -501,40 +587,6 @@ class RideTrackingActivity : AppCompatActivity() {
             data = "tel:100".toUri()
         }
         startActivity(dialIntent)
-    }
-    private fun disableNextUntilDriverArrives() {
-        nextArrow.isEnabled = false
-        nextArrow.alpha = 0.4f
-    }
-
-    private fun enableNextAfterDriverArrives() {
-        nextArrow.isEnabled = true
-        nextArrow.alpha = 1f
-    }
-
-    private fun listenForDriverArrival() {
-        if (requestId.isEmpty()) return
-
-        db.collection("ride_requests")
-            .document(requestId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
-
-                val status = snapshot.getString("status") ?: ""
-
-                if (status == "arrived" && !driverHasArrived) {
-                    driverHasArrived = true
-                    currentRideState = RideState.ARRIVED
-                    updateRideStateUI()
-                    enableNextAfterDriverArrives()
-
-                    Toast.makeText(
-                        this,
-                        "Your driver has arrived. You can start the ride now.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
     }
 
     override fun onDestroy() {
