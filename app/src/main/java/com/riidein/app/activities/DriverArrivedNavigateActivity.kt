@@ -60,12 +60,10 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
                 vehicleInfoTop.text = "CAB"
                 vehicleImage.setImageResource(R.drawable.car)
             }
-
             "delivery" -> {
                 vehicleInfoTop.text = "DELIVERY"
                 vehicleImage.setImageResource(R.drawable.delivery)
             }
-
             else -> {
                 vehicleInfoTop.text = "MOTOR-BIKE"
                 vehicleImage.setImageResource(R.drawable.bike)
@@ -79,7 +77,7 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         }
 
         findViewById<ImageButton>(R.id.closeButton).setOnClickListener {
-            finish()
+            cancelRideByDriver()
         }
 
         findViewById<Button>(R.id.navigateButton).setOnClickListener {
@@ -150,10 +148,39 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
             .update("status", "completed")
             .addOnSuccessListener {
                 Toast.makeText(this, "Ride completed successfully", Toast.LENGTH_SHORT).show()
+
+                val intent = Intent(this, DriverHomeActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
                 finish()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to complete ride", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun cancelRideByDriver() {
+        if (requestId.isBlank()) {
+            val intent = Intent(this, DriverHomeActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+            finish()
+            return
+        }
+
+        db.collection("ride_requests")
+            .document(requestId)
+            .update("status", "cancelled_by_driver")
+            .addOnSuccessListener {
+                Toast.makeText(this, "Ride cancelled", Toast.LENGTH_SHORT).show()
+
+                val intent = Intent(this, DriverHomeActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                finish()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to cancel ride", Toast.LENGTH_SHORT).show()
             }
     }
 }

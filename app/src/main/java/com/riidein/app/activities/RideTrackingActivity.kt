@@ -351,6 +351,22 @@ class RideTrackingActivity : AppCompatActivity() {
 
                     saveCompletedRideToFirestore()
                 }
+                if (status == "cancelled_by_driver") {
+                    Toast.makeText(
+                        applicationContext,
+                        "Your ride has been cancelled by the driver.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    nextArrow.postDelayed({
+                        val intent = Intent(this, VehicleSelectionActivity::class.java)
+                        intent.putExtra("from_location", fromLocation)
+                        intent.putExtra("to_location", toLocation)
+                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                        finish()
+                    }, 1800)
+                }
             }
     }
 
