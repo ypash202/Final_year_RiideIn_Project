@@ -134,6 +134,7 @@ class DriverRideRequestActivity : AppCompatActivity() {
                 Toast.makeText(this, "Ride accepted", Toast.LENGTH_SHORT).show()
 
                 val intent = Intent(this, DriverArrivedNavigateActivity::class.java)
+                intent.putExtra("request_id", currentRequestId)
                 intent.putExtra("customer_name", currentCustomerName)
                 intent.putExtra("pickup", currentPickup)
                 intent.putExtra("drop", currentDrop)
