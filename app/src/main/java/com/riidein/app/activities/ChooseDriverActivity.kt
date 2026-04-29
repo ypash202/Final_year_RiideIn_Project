@@ -101,6 +101,7 @@ class ChooseDriverActivity : AppCompatActivity() {
     private fun loadAvailableDrivers() {
         val vehicleType = when (selectedVehicle.trim().lowercase()) {
             "moto" -> "bike"
+            "bike" -> "bike"
             "cab" -> "cab"
             else -> "delivery"
         }
@@ -115,9 +116,14 @@ class ChooseDriverActivity : AppCompatActivity() {
             .addOnSuccessListener { result ->
                 driverIds.clear()
                 driverNames.clear()
+                hideDriverCards()
 
                 if (result.isEmpty) {
-                    Toast.makeText(this, "No available $selectedVehicle driver found", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        "No available $selectedVehicle driver found",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@addOnSuccessListener
                 }
 
@@ -175,12 +181,16 @@ class ChooseDriverActivity : AppCompatActivity() {
         acceptButton1.setOnClickListener {
             if (driverIds.isNotEmpty()) {
                 sendRideRequest(driverIds[0], driverNames[0])
+            } else {
+                Toast.makeText(this, "Driver not found", Toast.LENGTH_SHORT).show()
             }
         }
 
         acceptButton2.setOnClickListener {
             if (driverIds.size > 1) {
                 sendRideRequest(driverIds[1], driverNames[1])
+            } else {
+                Toast.makeText(this, "Driver not found", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -215,26 +225,45 @@ class ChooseDriverActivity : AppCompatActivity() {
                 db.collection("ride_requests")
                     .add(request)
                     .addOnSuccessListener { document ->
-                        Toast.makeText(this, "Ride request sent to $driverName", Toast.LENGTH_SHORT).show()
-                        listenForDriverAccept(document.id, driverName)
+                        Toast.makeText(
+                            this,
+                            "Ride request sent to $driverName",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        listenForDriverAccept(
+                            requestId = document.id,
+                            driverId = driverId,
+                            driverName = driverName
+                        )
                     }
                     .addOnFailureListener {
                         Toast.makeText(this, "Failed to send request", Toast.LENGTH_SHORT).show()
                     }
             }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to load customer details", Toast.LENGTH_SHORT).show()
+            }
     }
 
-    private fun listenForDriverAccept(requestId: String, driverName: String) {
+    private fun listenForDriverAccept(
+        requestId: String,
+        driverId: String,
+        driverName: String
+    ) {
         db.collection("ride_requests")
             .document(requestId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
+                if (error != null || snapshot == null || !snapshot.exists()) {
+                    return@addSnapshotListener
+                }
 
                 val status = snapshot.getString("status") ?: ""
 
                 if (status == "accepted") {
                     val intent = Intent(this, RideTrackingActivity::class.java)
                     intent.putExtra("request_id", requestId)
+                    intent.putExtra("driver_id", driverId)
                     intent.putExtra("driver_name", driverName)
                     intent.putExtra("vehicle_name", selectedVehicle)
                     intent.putExtra("selected_price", selectedPrice)
@@ -245,7 +274,11 @@ class ChooseDriverActivity : AppCompatActivity() {
                 }
 
                 if (status == "declined") {
-                    Toast.makeText(this, "$driverName declined your request", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        "$driverName declined your request",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
     }
@@ -253,6 +286,7 @@ class ChooseDriverActivity : AppCompatActivity() {
     private fun buildVehicleText(vehicleType: String): String {
         return when (vehicleType.trim().lowercase()) {
             "moto" -> "MOTOR-BIKE"
+            "bike" -> "MOTOR-BIKE"
             "cab" -> "CAB"
             "delivery" -> "DELIVERY"
             else -> vehicleType
@@ -261,6 +295,10 @@ class ChooseDriverActivity : AppCompatActivity() {
 
     private fun shortenPlaceName(place: String, maxLength: Int): String {
         val cleanText = place.trim()
-        return if (cleanText.length <= maxLength) cleanText else cleanText.take(maxLength - 3) + "..."
+        return if (cleanText.length <= maxLength) {
+            cleanText
+        } else {
+            cleanText.take(maxLength - 3) + "..."
+        }
     }
 }

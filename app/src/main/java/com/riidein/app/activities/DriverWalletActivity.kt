@@ -129,7 +129,70 @@ class DriverWalletActivity : AppCompatActivity() {
         titleText.visibility = View.GONE
 
         bottomNav.visibility = View.VISIBLE
-        completeRideButton.text = getString(R.string.complete_ride)
+        completeRideButton.text = "Earnings"
+
+        loadDriverEarnings()
+    }
+    private fun loadDriverEarnings() {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            showDriverEmptyState()
+            return
+        }
+
+        db.collection(COLLECTION_COMPLETED_RIDES)
+            .whereEqualTo("driverId", currentUser.uid)
+            .whereEqualTo("status", "completed")
+            .get()
+            .addOnSuccessListener { result ->
+                if (result.isEmpty) {
+                    showDriverEmptyState()
+                    return@addOnSuccessListener
+                }
+
+                val sortedDocuments = result.documents.sortedByDescending { document ->
+                    document.getLong(FIELD_TIMESTAMP) ?: 0L
+                }
+
+                ridesContainer.removeAllViews()
+
+                var totalEarnings = 0.0
+
+                for (document in sortedDocuments) {
+                    val ride = CompletedRide(
+                        driverName = document.getString(FIELD_DRIVER_NAME) ?: "Passenger",
+                        rideTime = document.getString(FIELD_RIDE_TIME)
+                            ?: getString(R.string.wallet_default_ride_time),
+                        rideDistance = document.getString(FIELD_RIDE_DISTANCE)
+                            ?: getString(R.string.wallet_default_ride_distance),
+                        rideDate = document.getString(FIELD_RIDE_DATE)
+                            ?: getString(R.string.wallet_default_ride_date),
+                        rideFare = document.getString(FIELD_RIDE_FARE)
+                            ?: getString(R.string.wallet_default_ride_fare),
+                        pickupLocation = document.getString(FIELD_PICKUP_LOCATION)
+                            ?: getString(R.string.wallet_default_pickup),
+                        dropLocation = document.getString(FIELD_DROP_LOCATION)
+                            ?: getString(R.string.wallet_default_drop)
+                    )
+
+                    totalEarnings += extractFareAmount(ride.rideFare)
+                    ridesContainer.addView(createRideCard(ride))
+                }
+
+                totalRidesText.text = "Total completed rides: ${sortedDocuments.size}"
+                totalSpentText.text = "Total amount earned: Rs ${formatMoney(totalEarnings)}"
+                emptyStateText.visibility = View.GONE
+            }
+            .addOnFailureListener {
+                showDriverEmptyState()
+            }
+    }
+    private fun showDriverEmptyState() {
+        ridesContainer.removeAllViews()
+        totalRidesText.text = "Total completed rides: 0"
+        totalSpentText.text = "Total amount earned: Rs 0"
+        emptyStateText.text = "No earnings yet"
+        emptyStateText.visibility = View.VISIBLE
     }
 
     private fun setupClicks() {

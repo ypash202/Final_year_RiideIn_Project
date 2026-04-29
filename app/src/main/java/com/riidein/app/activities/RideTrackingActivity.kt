@@ -59,6 +59,8 @@ class RideTrackingActivity : AppCompatActivity() {
     private var toLocation: String = "Trade Tower, Thapathali"
 
     private var requestId: String = ""
+
+    private var driverId: String = ""
     private var driverHasArrived = false
     private var completedRideSaved = false
 
@@ -130,7 +132,7 @@ class RideTrackingActivity : AppCompatActivity() {
 
     private fun readIntentData() {
         requestId = intent.getStringExtra("request_id") ?: ""
-
+        driverId = intent.getStringExtra("driver_id") ?: ""
         driverName = intent.getStringExtra("driver_name") ?: "Binod"
         vehicleName = intent.getStringExtra("vehicle_name") ?: "Moto"
         vehicleNumber = intent.getStringExtra("vehicle_number") ?: when (driverName.lowercase()) {
@@ -372,6 +374,7 @@ class RideTrackingActivity : AppCompatActivity() {
 
         val completedRide = hashMapOf(
             "customerId" to currentUser.uid,
+            "driverId" to driverId,
             "driverName" to driverName,
             "vehicleName" to vehicleName,
             "vehicleNumber" to vehicleNumber,
