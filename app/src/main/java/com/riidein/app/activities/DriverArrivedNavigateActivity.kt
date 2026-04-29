@@ -107,6 +107,7 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
     private fun markDriverArrived() {
         if (requestId.isBlank()) {
             Toast.makeText(this, "Ride request not found", Toast.LENGTH_SHORT).show()
+
             return
         }
 

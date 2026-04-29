@@ -58,6 +58,8 @@ class RideTrackingActivity : AppCompatActivity() {
     private var fromLocation: String = "Boudha"
     private var toLocation: String = "Trade Tower, Thapathali"
 
+    private var requestId: String = ""
+    private var driverHasArrived = false
     private enum class RideState {
         ARRIVING,
         ARRIVED,
@@ -98,6 +100,8 @@ class RideTrackingActivity : AppCompatActivity() {
         bindRideData()
         updateRideStateUI()
         setupClicks()
+        disableNextUntilDriverArrives()
+        listenForDriverArrival()
     }
 
     private fun initViews() {
@@ -122,6 +126,8 @@ class RideTrackingActivity : AppCompatActivity() {
     }
 
     private fun readIntentData() {
+
+        requestId = intent.getStringExtra("request_id") ?: ""
         driverName = intent.getStringExtra("driver_name") ?: "Binod"
         vehicleName = intent.getStringExtra("vehicle_name") ?: "Moto"
         vehicleNumber = intent.getStringExtra("vehicle_number") ?: when (driverName.lowercase()) {
@@ -495,6 +501,40 @@ class RideTrackingActivity : AppCompatActivity() {
             data = "tel:100".toUri()
         }
         startActivity(dialIntent)
+    }
+    private fun disableNextUntilDriverArrives() {
+        nextArrow.isEnabled = false
+        nextArrow.alpha = 0.4f
+    }
+
+    private fun enableNextAfterDriverArrives() {
+        nextArrow.isEnabled = true
+        nextArrow.alpha = 1f
+    }
+
+    private fun listenForDriverArrival() {
+        if (requestId.isEmpty()) return
+
+        db.collection("ride_requests")
+            .document(requestId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
+
+                val status = snapshot.getString("status") ?: ""
+
+                if (status == "arrived" && !driverHasArrived) {
+                    driverHasArrived = true
+                    currentRideState = RideState.ARRIVED
+                    updateRideStateUI()
+                    enableNextAfterDriverArrives()
+
+                    Toast.makeText(
+                        this,
+                        "Your driver has arrived. You can start the ride now.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
     }
 
     override fun onDestroy() {
