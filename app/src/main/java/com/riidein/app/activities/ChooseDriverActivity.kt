@@ -1,38 +1,29 @@
 package com.riidein.app.activities
 
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.View
+import android.util.TypedValue
+import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.riidein.app.R
+import java.util.Locale
 
 class ChooseDriverActivity : AppCompatActivity() {
 
     private lateinit var fromMapText: TextView
     private lateinit var toMapText: TextView
-
-    private lateinit var driverCard1: LinearLayout
-    private lateinit var driverCard2: LinearLayout
-
-    private lateinit var driver1NameText: TextView
-    private lateinit var driver2NameText: TextView
-    private lateinit var driver1VehicleText: TextView
-    private lateinit var driver2VehicleText: TextView
-    private lateinit var driver1PriceText: TextView
-    private lateinit var driver2PriceText: TextView
-    private lateinit var driver1TimeText: TextView
-    private lateinit var driver2TimeText: TextView
-
-    private lateinit var acceptButton1: Button
-    private lateinit var acceptButton2: Button
-    private lateinit var declineButton1: Button
-    private lateinit var declineButton2: Button
+    private lateinit var driverListContainer: LinearLayout
     private lateinit var cancelRequestButton: Button
 
     private val auth = FirebaseAuth.getInstance()
@@ -43,8 +34,8 @@ class ChooseDriverActivity : AppCompatActivity() {
     private var selectedVehicle: String = "Moto"
     private var selectedPrice: String = "Rs 0"
 
-    private val driverIds = mutableListOf<String>()
-    private val driverNames = mutableListOf<String>()
+    private val availableDrivers = mutableListOf<DriverOption>()
+    private var requestStatusListener: ListenerRegistration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,150 +43,273 @@ class ChooseDriverActivity : AppCompatActivity() {
 
         readIntentData()
         initViews()
-        bindMapTexts()
-        hideDriverCards()
+        bindLocationText()
+        setupClicks()
         loadAvailableDrivers()
-        setupButtons()
     }
 
     private fun readIntentData() {
         fromLocation = intent.getStringExtra("from_location") ?: "Current Location"
         toLocation = intent.getStringExtra("to_location") ?: "Destination"
-        selectedVehicle = intent.getStringExtra("selected_vehicle") ?: "Moto"
-        selectedPrice = intent.getStringExtra("selected_price") ?: "Rs 0"
+
+        selectedVehicle =
+            intent.getStringExtra("selected_vehicle")
+                ?: intent.getStringExtra("vehicle_type")
+                        ?: "Moto"
+
+        selectedPrice =
+            intent.getStringExtra("selected_price")
+                ?: intent.getStringExtra("fare")
+                        ?: "Rs 0"
     }
 
     private fun initViews() {
         fromMapText = findViewById(R.id.fromMapText)
         toMapText = findViewById(R.id.toMapText)
-
-        driverCard1 = findViewById(R.id.driverCard1)
-        driverCard2 = findViewById(R.id.driverCard2)
-
-        driver1NameText = findViewById(R.id.driver1NameText)
-        driver2NameText = findViewById(R.id.driver2NameText)
-        driver1VehicleText = findViewById(R.id.driver1VehicleText)
-        driver2VehicleText = findViewById(R.id.driver2VehicleText)
-        driver1PriceText = findViewById(R.id.driver1PriceText)
-        driver2PriceText = findViewById(R.id.driver2PriceText)
-        driver1TimeText = findViewById(R.id.driver1TimeText)
-        driver2TimeText = findViewById(R.id.driver2TimeText)
-
-        acceptButton1 = findViewById(R.id.acceptButton1)
-        acceptButton2 = findViewById(R.id.acceptButton2)
-        declineButton1 = findViewById(R.id.declineButton1)
-        declineButton2 = findViewById(R.id.declineButton2)
+        driverListContainer = findViewById(R.id.driverListContainer)
         cancelRequestButton = findViewById(R.id.cancelRequestButton)
     }
 
-    private fun bindMapTexts() {
+    private fun bindLocationText() {
         fromMapText.text = shortenPlaceName(fromLocation, 18)
         toMapText.text = shortenPlaceName(toLocation, 18)
     }
 
-    private fun hideDriverCards() {
-        driverCard1.visibility = View.GONE
-        driverCard2.visibility = View.GONE
+    private fun setupClicks() {
+        cancelRequestButton.setOnClickListener {
+            requestStatusListener?.remove()
+            requestStatusListener = null
+            finish()
+        }
     }
 
     private fun loadAvailableDrivers() {
-        val vehicleType = when (selectedVehicle.trim().lowercase()) {
-            "moto" -> "bike"
-            "bike" -> "bike"
-            "cab" -> "cab"
-            else -> "delivery"
-        }
+        driverListContainer.removeAllViews()
+        availableDrivers.clear()
+
+        showMessageCard("Loading available drivers...")
 
         db.collection("users")
             .whereEqualTo("role", "driver")
-            .whereEqualTo("vehicleType", vehicleType)
             .whereEqualTo("isAvailable", true)
-            .whereEqualTo("verificationStatus", "approved")
-            .limit(2)
             .get()
             .addOnSuccessListener { result ->
-                driverIds.clear()
-                driverNames.clear()
-                hideDriverCards()
+                driverListContainer.removeAllViews()
+                availableDrivers.clear()
 
-                if (result.isEmpty) {
-                    Toast.makeText(
-                        this,
-                        "No available $selectedVehicle driver found",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                val filteredDrivers = result.documents.mapNotNull { document ->
+                    val rawVehicleType = document.getString("vehicleType") ?: ""
+                    val driverVehicleType = normalizeVehicleType(rawVehicleType)
+
+                    if (!isDriverAllowedForSelectedService(driverVehicleType)) {
+                        return@mapNotNull null
+                    }
+
+                    DriverOption(
+                        id = document.id,
+                        name = document.getString("name") ?: "Driver",
+                        vehicleType = driverVehicleType,
+                        rawVehicleType = rawVehicleType,
+                        phone = document.getString("phone") ?: ""
+                    )
+                }
+
+                availableDrivers.addAll(filteredDrivers)
+
+                if (availableDrivers.isEmpty()) {
+                    val message = if (isDeliverySelected()) {
+                        "No available bike or cab drivers found for delivery"
+                    } else {
+                        "No available ${displaySelectedVehicle()} drivers found"
+                    }
+
+                    showMessageCard(message)
+                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
                     return@addOnSuccessListener
                 }
 
-                val drivers = result.documents
-
-                if (drivers.isNotEmpty()) {
-                    val driver = drivers[0]
-                    val name = driver.getString("name") ?: "Driver"
-
-                    driverIds.add(driver.id)
-                    driverNames.add(name)
-
-                    driver1NameText.text = name
-                    driver1VehicleText.text = buildVehicleText(selectedVehicle)
-                    driver1PriceText.text = selectedPrice
-                    driver1TimeText.text = "1 min"
-                    driverCard1.visibility = View.VISIBLE
-                }
-
-                if (drivers.size > 1) {
-                    val driver = drivers[1]
-                    val name = driver.getString("name") ?: "Driver"
-
-                    driverIds.add(driver.id)
-                    driverNames.add(name)
-
-                    driver2NameText.text = name
-                    driver2VehicleText.text = buildVehicleText(selectedVehicle)
-                    driver2PriceText.text = selectedPrice
-                    driver2TimeText.text = "2 min"
-                    driverCard2.visibility = View.VISIBLE
-                }
+                showAllDriverCards()
             }
             .addOnFailureListener {
+                driverListContainer.removeAllViews()
+                showMessageCard("Failed to load drivers")
                 Toast.makeText(this, "Failed to load drivers", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun setupButtons() {
-        cancelRequestButton.setOnClickListener {
-            val intent = Intent(this, CancelRideActivity::class.java)
-            intent.putExtra("from_location", fromLocation)
-            intent.putExtra("to_location", toLocation)
-            startActivity(intent)
-        }
+    private fun showAllDriverCards() {
+        driverListContainer.removeAllViews()
 
-        declineButton1.setOnClickListener {
-            driverCard1.visibility = View.GONE
-        }
-
-        declineButton2.setOnClickListener {
-            driverCard2.visibility = View.GONE
-        }
-
-        acceptButton1.setOnClickListener {
-            if (driverIds.isNotEmpty()) {
-                sendRideRequest(driverIds[0], driverNames[0])
-            } else {
-                Toast.makeText(this, "Driver not found", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        acceptButton2.setOnClickListener {
-            if (driverIds.size > 1) {
-                sendRideRequest(driverIds[1], driverNames[1])
-            } else {
-                Toast.makeText(this, "Driver not found", Toast.LENGTH_SHORT).show()
-            }
+        availableDrivers.forEachIndexed { index, driver ->
+            driverListContainer.addView(createDriverCard(driver, index))
         }
     }
 
-    private fun sendRideRequest(driverId: String, driverName: String) {
+    private fun createDriverCard(driver: DriverOption, index: Int): LinearLayout {
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = createRoundedDrawable(
+                color = "#000000",
+                radiusDp = 22f
+            )
+            setPadding(
+                dpToInt(16f),
+                dpToInt(16f),
+                dpToInt(16f),
+                dpToInt(16f)
+            )
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                bottomMargin = dpToInt(18f)
+            }
+        }
+
+        val topRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val avatarText = TextView(this).apply {
+            text = driver.name.firstOrNull()?.uppercase() ?: "D"
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setTypeface(typeface, Typeface.BOLD)
+            background = createOvalDrawable("#4A4A4A")
+            layoutParams = LinearLayout.LayoutParams(
+                dpToInt(42f),
+                dpToInt(42f)
+            )
+        }
+
+        val nameColumn = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            ).apply {
+                marginStart = dpToInt(12f)
+            }
+        }
+
+        val nameText = TextView(this).apply {
+            text = driver.name
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTypeface(typeface, Typeface.BOLD)
+        }
+
+        val vehicleText = TextView(this).apply {
+            text = buildVehicleTextForCard(driver.vehicleType)
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            setTypeface(typeface, Typeface.BOLD)
+        }
+
+        nameColumn.addView(nameText)
+        nameColumn.addView(vehicleText)
+
+        val priceColumn = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.END
+        }
+
+        val priceText = TextView(this).apply {
+            text = selectedPrice
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setTypeface(typeface, Typeface.BOLD)
+        }
+
+        val timeText = TextView(this).apply {
+            text = "${index + 1} min"
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setTypeface(typeface, Typeface.BOLD)
+        }
+
+        priceColumn.addView(priceText)
+        priceColumn.addView(timeText)
+
+        topRow.addView(avatarText)
+        topRow.addView(nameColumn)
+        topRow.addView(priceColumn)
+
+        val buttonRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = dpToInt(26f)
+            }
+        }
+
+        val acceptButton = Button(this).apply {
+            text = "Accept"
+            isAllCaps = false
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setTypeface(typeface, Typeface.BOLD)
+            background = createRoundedDrawable(
+                color = "#00E676",
+                radiusDp = 22f
+            )
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                dpToInt(48f),
+                1f
+            ).apply {
+                marginEnd = dpToInt(9f)
+            }
+
+            setOnClickListener {
+                sendRideRequest(driver)
+            }
+        }
+
+        val declineButton = Button(this).apply {
+            text = "Decline"
+            isAllCaps = false
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setTypeface(typeface, Typeface.BOLD)
+            background = createRoundedDrawable(
+                color = "#FF2525",
+                radiusDp = 22f
+            )
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                dpToInt(48f),
+                1f
+            ).apply {
+                marginStart = dpToInt(9f)
+            }
+
+            setOnClickListener {
+                driverListContainer.removeView(card)
+                availableDrivers.remove(driver)
+
+                if (availableDrivers.isEmpty()) {
+                    showMessageCard("No more drivers available")
+                }
+            }
+        }
+
+        buttonRow.addView(acceptButton)
+        buttonRow.addView(declineButton)
+
+        card.addView(topRow)
+        card.addView(buttonRow)
+
+        return card
+    }
+
+    private fun sendRideRequest(driver: DriverOption) {
         val currentUser = auth.currentUser
 
         if (currentUser == null) {
@@ -209,17 +323,27 @@ class ChooseDriverActivity : AppCompatActivity() {
             .addOnSuccessListener { userDoc ->
                 val customerName = userDoc.getString("name") ?: "Customer"
 
-                val request = hashMapOf(
+                val request = hashMapOf<String, Any>(
                     "customerId" to currentUser.uid,
                     "customerName" to customerName,
-                    "driverId" to driverId,
-                    "driverName" to driverName,
-                    "vehicleType" to selectedVehicle,
+                    "driverId" to driver.id,
+                    "driverName" to driver.name,
+
+                    // serviceType = what customer selected: bike/cab/delivery
+                    // vehicleType = real driver vehicle: bike/cab
+                    "serviceType" to normalizeServiceType(selectedVehicle),
+                    "vehicleType" to driver.vehicleType,
+
                     "pickup" to fromLocation,
                     "drop" to toLocation,
                     "fare" to selectedPrice,
                     "status" to "pending",
-                    "createdAt" to System.currentTimeMillis()
+                    "createdAt" to System.currentTimeMillis(),
+
+                    "hiddenFromCustomer" to false,
+                    "hiddenFromDriver" to false,
+                    "customerNotified" to false,
+                    "driverNotified" to false
                 )
 
                 db.collection("ride_requests")
@@ -227,31 +351,39 @@ class ChooseDriverActivity : AppCompatActivity() {
                     .addOnSuccessListener { document ->
                         Toast.makeText(
                             this,
-                            "Ride request sent to $driverName",
+                            "Request sent to ${driver.name}",
                             Toast.LENGTH_SHORT
                         ).show()
 
-                        listenForDriverAccept(
+                        listenForDriverResponse(
                             requestId = document.id,
-                            driverId = driverId,
-                            driverName = driverName
+                            selectedDriver = driver
                         )
                     }
                     .addOnFailureListener {
-                        Toast.makeText(this, "Failed to send request", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this,
+                            "Failed to send request",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Failed to load customer details", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "Failed to load customer details",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
     }
 
-    private fun listenForDriverAccept(
+    private fun listenForDriverResponse(
         requestId: String,
-        driverId: String,
-        driverName: String
+        selectedDriver: DriverOption
     ) {
-        db.collection("ride_requests")
+        requestStatusListener?.remove()
+
+        requestStatusListener = db.collection("ride_requests")
             .document(requestId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null || !snapshot.exists()) {
@@ -260,45 +392,202 @@ class ChooseDriverActivity : AppCompatActivity() {
 
                 val status = snapshot.getString("status") ?: ""
 
-                if (status == "accepted") {
-                    val intent = Intent(this, RideTrackingActivity::class.java)
-                    intent.putExtra("request_id", requestId)
-                    intent.putExtra("driver_id", driverId)
-                    intent.putExtra("driver_name", driverName)
-                    intent.putExtra("vehicle_name", selectedVehicle)
-                    intent.putExtra("selected_price", selectedPrice)
-                    intent.putExtra("from_location", fromLocation)
-                    intent.putExtra("to_location", toLocation)
-                    startActivity(intent)
-                    finish()
-                }
+                when (status) {
+                    "accepted" -> {
+                        requestStatusListener?.remove()
+                        requestStatusListener = null
 
-                if (status == "declined") {
-                    Toast.makeText(
-                        this,
-                        "$driverName declined your request",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                        val intent = Intent(this, RideTrackingActivity::class.java)
+                        intent.putExtra("request_id", requestId)
+                        intent.putExtra("driver_id", selectedDriver.id)
+                        intent.putExtra("driver_name", selectedDriver.name)
+                        intent.putExtra(
+                            "vehicle_name",
+                            buildVehicleTextForTracking(selectedDriver.vehicleType)
+                        )
+                        intent.putExtra("selected_price", selectedPrice)
+                        intent.putExtra("from_location", fromLocation)
+                        intent.putExtra("to_location", toLocation)
+                        intent.putExtra("selected_service", selectedVehicle)
+                        startActivity(intent)
+                        finish()
+                    }
+
+                    "declined" -> {
+                        Toast.makeText(
+                            this,
+                            "${selectedDriver.name} declined your request",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    "cancelled_by_driver" -> {
+                        requestStatusListener?.remove()
+                        requestStatusListener = null
+
+                        Toast.makeText(
+                            this,
+                            "${selectedDriver.name} cancelled your request",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
     }
 
-    private fun buildVehicleText(vehicleType: String): String {
-        return when (vehicleType.trim().lowercase()) {
-            "moto" -> "MOTOR-BIKE"
+    private fun isDriverAllowedForSelectedService(driverVehicleType: String): Boolean {
+        return if (isDeliverySelected()) {
+            driverVehicleType == "bike" || driverVehicleType == "cab"
+        } else {
+            driverVehicleType == normalizeVehicleType(selectedVehicle)
+        }
+    }
+
+    private fun isDeliverySelected(): Boolean {
+        return normalizeServiceType(selectedVehicle) == "delivery"
+    }
+
+    private fun normalizeServiceType(serviceType: String): String {
+        return when (serviceType.trim().lowercase(Locale.getDefault())) {
+            "moto" -> "bike"
+            "motorbike" -> "bike"
+            "motor-bike" -> "bike"
+            "bike" -> "bike"
+
+            "cab" -> "cab"
+            "car" -> "cab"
+            "taxi" -> "cab"
+
+            "delivery" -> "delivery"
+
+            else -> serviceType.trim().lowercase(Locale.getDefault())
+        }
+    }
+
+    private fun normalizeVehicleType(vehicleType: String): String {
+        return when (vehicleType.trim().lowercase(Locale.getDefault())) {
+            "moto" -> "bike"
+            "motorbike" -> "bike"
+            "motor-bike" -> "bike"
+            "bike" -> "bike"
+
+            "cab" -> "cab"
+            "car" -> "cab"
+            "taxi" -> "cab"
+
+            else -> vehicleType.trim().lowercase(Locale.getDefault())
+        }
+    }
+
+    private fun buildVehicleTextForCard(driverVehicleType: String): String {
+        return if (isDeliverySelected()) {
+            when (driverVehicleType) {
+                "bike" -> "DELIVERY • MOTOR-BIKE"
+                "cab" -> "DELIVERY • CAB"
+                else -> "DELIVERY"
+            }
+        } else {
+            when (driverVehicleType) {
+                "bike" -> "MOTOR-BIKE"
+                "cab" -> "CAB"
+                else -> displaySelectedVehicle().uppercase(Locale.getDefault())
+            }
+        }
+    }
+
+    private fun buildVehicleTextForTracking(driverVehicleType: String): String {
+        return when (driverVehicleType) {
             "bike" -> "MOTOR-BIKE"
             "cab" -> "CAB"
-            "delivery" -> "DELIVERY"
-            else -> vehicleType
+            else -> displaySelectedVehicle().uppercase(Locale.getDefault())
         }
+    }
+
+    private fun displaySelectedVehicle(): String {
+        return when (normalizeServiceType(selectedVehicle)) {
+            "bike" -> "bike"
+            "cab" -> "cab"
+            "delivery" -> "delivery"
+            else -> selectedVehicle
+        }
+    }
+
+    private fun showMessageCard(message: String) {
+        driverListContainer.removeAllViews()
+
+        val textView = TextView(this).apply {
+            text = message
+            gravity = Gravity.CENTER
+            setTextColor(ContextCompat.getColor(this@ChooseDriverActivity, android.R.color.white))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setPadding(
+                dpToInt(18f),
+                dpToInt(22f),
+                dpToInt(18f),
+                dpToInt(22f)
+            )
+            background = createRoundedDrawable(
+                color = "#000000",
+                radiusDp = 18f
+            )
+        }
+
+        driverListContainer.addView(
+            textView,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
     }
 
     private fun shortenPlaceName(place: String, maxLength: Int): String {
         val cleanText = place.trim()
+
         return if (cleanText.length <= maxLength) {
             cleanText
         } else {
             cleanText.take(maxLength - 3) + "..."
         }
     }
+
+    private fun createRoundedDrawable(
+        color: String,
+        radiusDp: Float
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(Color.parseColor(color))
+            cornerRadius = dpToInt(radiusDp).toFloat()
+        }
+    }
+
+    private fun createOvalDrawable(color: String): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(Color.parseColor(color))
+        }
+    }
+
+    private fun dpToInt(value: Float): Int {
+        return TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            value,
+            resources.displayMetrics
+        ).toInt()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        requestStatusListener?.remove()
+        requestStatusListener = null
+    }
 }
+
+private data class DriverOption(
+    val id: String,
+    val name: String,
+    val vehicleType: String,
+    val rawVehicleType: String,
+    val phone: String
+)

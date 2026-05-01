@@ -9,327 +9,98 @@
         android:id="@+id/mapBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:contentDescription="@null"
         android:scaleType="centerCrop"
         android:src="@drawable/map_bg" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#88000000" />
-
-    <TextView
-        android:id="@+id/toMapText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="68dp"
-        android:layout_marginEnd="72dp"
-        android:background="@drawable/round_dark_button_bg"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:maxWidth="150dp"
-        android:paddingStart="12dp"
-        android:paddingTop="7dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="7dp"
-        android:text="Destination"
-        android:textColor="@android:color/white"
-        android:textSize="12sp"
-        android:textStyle="bold" />
-
-    <View
-        android:layout_width="62dp"
-        android:layout_height="62dp"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="92dp"
-        android:layout_marginEnd="110dp"
-        android:background="@drawable/round_dark_button_bg"
-        android:alpha="0.35" />
-
-    <View
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:layout_marginStart="178dp"
-        android:layout_marginTop="178dp"
-        android:background="@drawable/round_dark_button_bg"
-        android:alpha="0.35" />
-
-    <TextView
-        android:id="@+id/fromMapText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="145dp"
-        android:layout_marginTop="254dp"
-        android:background="@drawable/round_dark_button_bg"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:maxWidth="170dp"
-        android:paddingStart="12dp"
-        android:paddingTop="7dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="7dp"
-        android:text="Current Location"
-        android:textColor="@android:color/white"
-        android:textSize="12sp"
-        android:textStyle="bold" />
-
-    <View
-        android:layout_width="4dp"
-        android:layout_height="44dp"
-        android:layout_marginTop="118dp"
-        android:layout_marginStart="266dp"
-        android:background="#63B7C4" />
-
-    <View
-        android:layout_width="4dp"
-        android:layout_height="56dp"
-        android:layout_marginTop="161dp"
-        android:layout_marginStart="265dp"
-        android:rotation="84"
-        android:background="#63B7C4" />
-
-    <View
-        android:layout_width="4dp"
-        android:layout_height="46dp"
-        android:layout_marginTop="198dp"
-        android:layout_marginStart="237dp"
-        android:background="#63B7C4" />
+        android:background="#99000000" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="18dp">
+        android:paddingStart="20dp"
+        android:paddingTop="32dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="20dp">
 
         <Button
             android:id="@+id/cancelRequestButton"
-            android:layout_width="170dp"
-            android:layout_height="42dp"
-            android:background="@drawable/cancel_request_button_bg"
-            android:text="✕ Cancel request"
+            android:layout_width="190dp"
+            android:layout_height="48dp"
+            android:backgroundTint="#D90000"
+            android:text="@string/cancel_request"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
-            android:textSize="14sp" />
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/chooseDriverTitle"
+            android:id="@+id/titleText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:text="Choose a driver"
+            android:layout_marginTop="22dp"
+            android:text="@string/choose_a_driver"
             android:textColor="@android:color/white"
-            android:textSize="22sp"
+            android:textSize="26sp"
             android:textStyle="bold" />
 
         <LinearLayout
-            android:id="@+id/driverCard1"
+            android:id="@+id/locationRow"
             android:layout_width="match_parent"
-            android:layout_height="140dp"
-            android:layout_marginTop="18dp"
-            android:background="@drawable/choose_driver_card_bg"
-            android:orientation="vertical"
-            android:padding="14dp">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="end"
+            android:orientation="horizontal">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/fromMapText"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_weight="1"
+                android:text="@string/from_location_placeholder"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:visibility="gone" />
 
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:src="@drawable/profile1" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/driver1NameText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Binod"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/driver1VehicleText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="MOTOR-BIKE Honda"
-                        android:textColor="@android:color/white"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/driver1PriceText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Rs 200"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/driver1TimeText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1 min"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/toMapText"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:gravity="center"
-                android:orientation="horizontal">
+                android:background="#CC1E1E1E"
+                android:paddingStart="14dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="8dp"
+                android:text="@string/to_location_placeholder"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/acceptButton1"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/accept_button_bg"
-                    android:text="Accept"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/declineButton1"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/decline_button_bg"
-                    android:text="Decline"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/driverCard2"
+        <ScrollView
+            android:id="@+id/driverScrollView"
             android:layout_width="match_parent"
-            android:layout_height="140dp"
+            android:layout_height="0dp"
             android:layout_marginTop="18dp"
-            android:background="@drawable/choose_driver_card_bg"
-            android:orientation="vertical"
-            android:padding="14dp">
+            android:layout_weight="1"
+            android:contentDescription="@string/available_drivers_list"
+            android:fillViewport="false"
+            android:scrollbars="none">
 
             <LinearLayout
+                android:id="@+id/driverListContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="vertical"
+                android:paddingBottom="30dp" />
 
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:src="@drawable/profile2" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/driver2NameText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Sulav"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/driver2VehicleText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="MOTOR-BIKE Bajaj"
-                        android:textColor="@android:color/white"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/driver2PriceText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Rs 200"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/driver2TimeText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="2 min"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/acceptButton2"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/accept_button_bg"
-                    android:text="Accept"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/declineButton2"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/decline_button_bg"
-                    android:text="Decline"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
+        </ScrollView>
 
     </LinearLayout>
 

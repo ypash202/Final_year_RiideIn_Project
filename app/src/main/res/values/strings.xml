@@ -195,13 +195,13 @@
     <string name="sos_message_with_location">This will save your current trip location and open Nepal Police emergency number 100. Do you want to continue?</string>
     <string name="location_permission_denied_sos">Location permission denied. SOS will continue without exact location.</string>
     <string name="no_location_provider">No location provider available. SOS will continue without exact location.</string>
-    <string name="fetching_location_sos">Fetching current location for SOS...</string>
+    <string name="fetching_location_sos">Fetching current location for SOS</string>
     <string name="sos_saved">SOS alert saved with current trip details</string>
     <string name="sos_save_failed">SOS will continue even if alert save failed</string>
 
     <string name="system">System</string>
     <string name="promotion">Promotion</string>
-    <string name="system_notification_text">Your booking #1234 has been suc...</string>
+    <string name="system_notification_text">Your booking #1234 has been successful</string>
     <string name="promotion_notification_text">Invite friends - Get 3 coupons each!</string>
     <string name="wallet_date_sample">Date: 23 Apr 2026</string>
     <string name="payment_details">Payment details</string>
@@ -240,6 +240,11 @@
     <string name="where_are_you_going">Where are you going?</string>
     <string name="motor_bike">MOTOR-BIKE</string>
 
+    <string name="cancel_request">✕ Cancel request</string>
+    <string name="choose_a_driver">Choose a driver</string>
+    <string name="from_location_placeholder">From</string>
+    <string name="to_location_placeholder">To</string>
+    <string name="available_drivers_list">Available drivers list</string>
 
 
 </resources>
