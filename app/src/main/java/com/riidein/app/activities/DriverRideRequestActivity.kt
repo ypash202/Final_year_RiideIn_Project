@@ -31,6 +31,7 @@ class DriverRideRequestActivity : AppCompatActivity() {
     private lateinit var closeButton: ImageButton
 
     private var currentRequestId: String = ""
+    private var currentCustomerId: String = ""
     private var currentCustomerName: String = ""
     private var currentPickup: String = ""
     private var currentDrop: String = ""
@@ -122,6 +123,7 @@ class DriverRideRequestActivity : AppCompatActivity() {
                 val doc = value.documents[0]
 
                 currentRequestId = doc.id
+                currentCustomerId = doc.getString("customerId") ?: ""
                 currentCustomerName = doc.getString("customerName") ?: "Customer"
                 currentPickup = doc.getString("pickup") ?: "Pickup"
                 currentDrop = doc.getString("drop") ?: "Drop"
@@ -192,6 +194,7 @@ class DriverRideRequestActivity : AppCompatActivity() {
 
                 val intent = Intent(this, DriverArrivedNavigateActivity::class.java)
                 intent.putExtra("request_id", currentRequestId)
+                intent.putExtra("customer_id", currentCustomerId)
                 intent.putExtra("customer_name", currentCustomerName)
                 intent.putExtra("pickup", currentPickup)
                 intent.putExtra("drop", currentDrop)
@@ -247,6 +250,7 @@ class DriverRideRequestActivity : AppCompatActivity() {
 
     private fun clearCurrentRide() {
         currentRequestId = ""
+        currentCustomerId = ""
         currentCustomerName = ""
         currentPickup = ""
         currentDrop = ""
@@ -292,6 +296,7 @@ class DriverRideRequestActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+
         requestListListener?.remove()
         requestListListener = null
 

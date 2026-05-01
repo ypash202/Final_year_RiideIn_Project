@@ -6,10 +6,12 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.riidein.app.R
@@ -19,6 +21,7 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
 
     private var requestId = ""
+    private var customerId = ""
     private var customerName = ""
     private var pickupLocation = ""
     private var dropLocation = ""
@@ -27,24 +30,38 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
     private var driverArrived = false
 
     private var customerCancelListener: ListenerRegistration? = null
+    private var chatToastListener: ListenerRegistration? = null
     private var hasHandledCustomerCancellation = false
 
     private lateinit var arrivedButton: Button
+    private lateinit var backButton: ImageButton
+    private lateinit var closeButton: ImageButton
+    private lateinit var navigateButton: Button
+    private lateinit var contactCustomerRow: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_driver_arrived_navigate)
 
-        arrivedButton = findViewById(R.id.arrivedButton)
-
+        initViews()
         readIntentData()
         bindData()
         setupClicks()
         listenForCustomerCancellation()
+        listenForIncomingRideMessages()
+    }
+
+    private fun initViews() {
+        backButton = findViewById(R.id.backButton)
+        closeButton = findViewById(R.id.closeButton)
+        navigateButton = findViewById(R.id.navigateButton)
+        arrivedButton = findViewById(R.id.arrivedButton)
+        contactCustomerRow = findViewById(R.id.contactCustomerRow)
     }
 
     private fun readIntentData() {
         requestId = intent.getStringExtra("request_id") ?: ""
+        customerId = intent.getStringExtra("customer_id") ?: ""
         customerName = intent.getStringExtra("customer_name") ?: "Customer"
         pickupLocation = intent.getStringExtra("pickup") ?: "Pickup"
         dropLocation = intent.getStringExtra("drop") ?: "Drop"
@@ -62,7 +79,7 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         val vehicleImage = findViewById<ImageView>(R.id.bikeImage)
 
         when (vehicleType.trim().lowercase()) {
-            "cab" -> {
+            "cab", "car", "taxi" -> {
                 vehicleInfoTop.text = getString(R.string.cab)
                 vehicleImage.setImageResource(R.drawable.car)
             }
@@ -80,15 +97,25 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
     }
 
     private fun setupClicks() {
-        findViewById<ImageButton>(R.id.backButton).setOnClickListener {
-            finish()
+        backButton.isEnabled = false
+        backButton.alpha = 0.35f
+        backButton.setOnClickListener {
+            Toast.makeText(
+                this,
+                "Back is disabled during an active ride",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
-        findViewById<ImageButton>(R.id.closeButton).setOnClickListener {
+        closeButton.setOnClickListener {
             cancelRideByDriver()
         }
 
-        findViewById<Button>(R.id.navigateButton).setOnClickListener {
+        contactCustomerRow.setOnClickListener {
+            openContactCustomerPage()
+        }
+
+        navigateButton.setOnClickListener {
             openNavigationToCustomer()
         }
 
@@ -99,6 +126,47 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
                 completeRide()
             }
         }
+    }
+
+    private fun openContactCustomerPage() {
+        val intent = Intent(this, MessagesActivity::class.java)
+        intent.putExtra("user_role", "driver")
+        intent.putExtra("request_id", requestId)
+        intent.putExtra("contact_role", "customer")
+        intent.putExtra("contact_user_id", customerId)
+        intent.putExtra("contact_name", customerName)
+        intent.putExtra("return_to_ride", true)
+        startActivity(intent)
+    }
+
+    private fun listenForIncomingRideMessages() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        if (requestId.isBlank()) return
+
+        chatToastListener?.remove()
+
+        chatToastListener = db.collection("ride_chats")
+            .document(requestId)
+            .collection("messages")
+            .whereEqualTo("receiverId", currentUserId)
+            .whereEqualTo("seenByReceiver", false)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null || snapshot.isEmpty) {
+                    return@addSnapshotListener
+                }
+
+                val latestMessage = snapshot.documents.lastOrNull() ?: return@addSnapshotListener
+                val senderRole = latestMessage.getString("senderRole") ?: ""
+
+                if (senderRole == "customer") {
+                    Toast.makeText(
+                        this,
+                        "Customer sent you a message",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
     }
 
     private fun listenForCustomerCancellation() {
@@ -295,5 +363,8 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         super.onDestroy()
         customerCancelListener?.remove()
         customerCancelListener = null
+
+        chatToastListener?.remove()
+        chatToastListener = null
     }
 }

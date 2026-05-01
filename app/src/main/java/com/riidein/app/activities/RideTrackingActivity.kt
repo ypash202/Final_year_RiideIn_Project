@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
@@ -21,6 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.riidein.app.R
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -59,8 +61,9 @@ class RideTrackingActivity : AppCompatActivity() {
     private var toLocation: String = "Trade Tower, Thapathali"
 
     private var requestId: String = ""
-
     private var driverId: String = ""
+    private var driverPhotoUrl: String = ""
+
     private var driverHasArrived = false
     private var completedRideSaved = false
 
@@ -73,6 +76,8 @@ class RideTrackingActivity : AppCompatActivity() {
 
     private var currentRideState = RideState.ARRIVING
     private var currentLocationListener: LocationListener? = null
+    private var chatToastListener: ListenerRegistration? = null
+    private var rideStatusListener: ListenerRegistration? = null
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -107,6 +112,8 @@ class RideTrackingActivity : AppCompatActivity() {
         setupClicks()
         disableNextUntilDriverArrives()
         listenForRideStatus()
+        loadDriverPhotoFromFirestore()
+        listenForIncomingRideMessages()
     }
 
     private fun initViews() {
@@ -134,11 +141,14 @@ class RideTrackingActivity : AppCompatActivity() {
         requestId = intent.getStringExtra("request_id") ?: ""
         driverId = intent.getStringExtra("driver_id") ?: ""
         driverName = intent.getStringExtra("driver_name") ?: "Binod"
+        driverPhotoUrl = intent.getStringExtra("driver_photo_url") ?: ""
+
         vehicleName = intent.getStringExtra("vehicle_name") ?: "Moto"
         vehicleNumber = intent.getStringExtra("vehicle_number") ?: when (driverName.lowercase()) {
             "sulav" -> "BA 02 PA 5678"
             else -> "BA 01 PA 1234"
         }
+
         selectedPrice = intent.getStringExtra("selected_price") ?: "Rs 200"
         fromLocation = intent.getStringExtra("from_location") ?: "Boudha"
         toLocation = intent.getStringExtra("to_location") ?: "Trade Tower, Thapathali"
@@ -147,9 +157,9 @@ class RideTrackingActivity : AppCompatActivity() {
     private fun bindRideData() {
         driverNameText.text = driverName
 
-        driverVehicleText.text = when (vehicleName.lowercase()) {
-            "moto" -> getString(R.string.driver_vehicle_honda)
-            "cab" -> getString(R.string.vehicle_type_cab)
+        driverVehicleText.text = when (vehicleName.lowercase(Locale.getDefault())) {
+            "moto", "bike", "motor-bike", "motorbike" -> getString(R.string.driver_vehicle_honda)
+            "cab", "car", "taxi" -> getString(R.string.vehicle_type_cab)
             "delivery" -> getString(R.string.vehicle_type_delivery)
             else -> vehicleName
         }
@@ -159,32 +169,44 @@ class RideTrackingActivity : AppCompatActivity() {
         pickupLocationText.text = fromLocation
         dropLocationText.text = toLocation
 
-        if (driverName.equals("Sulav", ignoreCase = true)) {
-            driverProfileImage.setImageResource(R.drawable.profile2)
-        } else {
-            driverProfileImage.setImageResource(R.drawable.profile1)
-        }
+        loadProfileImageIntoView(driverProfileImage, driverPhotoUrl, R.drawable.profile2)
 
-        when (vehicleName.lowercase()) {
-            "moto" -> vehicleImage.setImageResource(R.drawable.bike)
-            "cab" -> vehicleImage.setImageResource(R.drawable.car)
+        when (vehicleName.lowercase(Locale.getDefault())) {
+            "moto", "bike", "motor-bike", "motorbike" -> vehicleImage.setImageResource(R.drawable.bike)
+            "cab", "car", "taxi" -> vehicleImage.setImageResource(R.drawable.car)
             "delivery" -> vehicleImage.setImageResource(R.drawable.delivery)
             else -> vehicleImage.setImageResource(R.drawable.bike)
         }
     }
 
     private fun setupClicks() {
+        backButton.isEnabled = false
+        backButton.alpha = 0.35f
         backButton.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
+            Toast.makeText(
+                this,
+                "Back is disabled during an active ride",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
         closeButton.setOnClickListener {
-            finish()
+            Toast.makeText(
+                this,
+                "Please cancel the ride before leaving this screen",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
         contactDriverRow.setOnClickListener {
             val intent = Intent(this, MessagesActivity::class.java)
-            intent.putExtra("driver_name", driverName)
+            intent.putExtra("user_role", "customer")
+            intent.putExtra("request_id", requestId)
+            intent.putExtra("contact_role", "driver")
+            intent.putExtra("contact_user_id", driverId)
+            intent.putExtra("contact_name", driverName)
+            intent.putExtra("contact_photo_url", driverPhotoUrl)
+            intent.putExtra("return_to_ride", true)
             startActivity(intent)
         }
 
@@ -252,6 +274,7 @@ class RideTrackingActivity : AppCompatActivity() {
             RideState.ARRIVING -> {
                 arrivalTitle.text = getString(R.string.ride_state_arriving)
                 cancelRideButton.text = getString(R.string.cancel_ride)
+                cancelRideButton.isEnabled = true
                 contactDriverRow.visibility = LinearLayout.VISIBLE
                 nextArrow.visibility = ImageView.VISIBLE
                 sosButton.visibility = Button.VISIBLE
@@ -263,6 +286,7 @@ class RideTrackingActivity : AppCompatActivity() {
             RideState.ARRIVED -> {
                 arrivalTitle.text = "Your driver has arrived"
                 cancelRideButton.text = "Start Ride"
+                cancelRideButton.isEnabled = true
                 contactDriverRow.visibility = LinearLayout.VISIBLE
                 nextArrow.visibility = ImageView.VISIBLE
                 sosButton.visibility = Button.VISIBLE
@@ -318,10 +342,14 @@ class RideTrackingActivity : AppCompatActivity() {
             return
         }
 
-        db.collection("ride_requests")
+        rideStatusListener?.remove()
+
+        rideStatusListener = db.collection("ride_requests")
             .document(requestId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
+                if (error != null || snapshot == null || !snapshot.exists()) {
+                    return@addSnapshotListener
+                }
 
                 val status = snapshot.getString("status") ?: ""
 
@@ -351,6 +379,7 @@ class RideTrackingActivity : AppCompatActivity() {
 
                     saveCompletedRideToFirestore()
                 }
+
                 if (status == "cancelled_by_driver") {
                     Toast.makeText(
                         applicationContext,
@@ -368,6 +397,77 @@ class RideTrackingActivity : AppCompatActivity() {
                     }, 1800)
                 }
             }
+    }
+
+    private fun listenForIncomingRideMessages() {
+        val currentUserId = auth.currentUser?.uid ?: return
+
+        if (requestId.isBlank()) {
+            return
+        }
+
+        chatToastListener?.remove()
+
+        chatToastListener = db.collection("ride_chats")
+            .document(requestId)
+            .collection("messages")
+            .whereEqualTo("receiverId", currentUserId)
+            .whereEqualTo("seenByReceiver", false)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null || snapshot.isEmpty) {
+                    return@addSnapshotListener
+                }
+
+                val latestMessage = snapshot.documents.lastOrNull() ?: return@addSnapshotListener
+                val senderRole = latestMessage.getString("senderRole") ?: ""
+
+                if (senderRole == "driver") {
+                    Toast.makeText(
+                        this,
+                        "Driver sent you a message",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+    }
+
+    private fun loadDriverPhotoFromFirestore() {
+        if (driverId.isBlank()) {
+            loadProfileImageIntoView(driverProfileImage, driverPhotoUrl, R.drawable.profile2)
+            return
+        }
+
+        db.collection("users")
+            .document(driverId)
+            .get()
+            .addOnSuccessListener { document ->
+                driverPhotoUrl = document.getString("driverPhotoUrl")
+                    ?: document.getString("profileImageUrl")
+                            ?: document.getString("profilePhotoUrl")
+                            ?: driverPhotoUrl
+
+                loadProfileImageIntoView(driverProfileImage, driverPhotoUrl, R.drawable.profile2)
+            }
+            .addOnFailureListener {
+                loadProfileImageIntoView(driverProfileImage, driverPhotoUrl, R.drawable.profile2)
+            }
+    }
+
+    private fun loadProfileImageIntoView(
+        imageView: ImageView,
+        imageUrl: String,
+        fallbackRes: Int
+    ) {
+        if (imageUrl.isBlank()) {
+            imageView.setImageResource(fallbackRes)
+            return
+        }
+
+        try {
+            imageView.setImageURI(Uri.parse(imageUrl))
+        } catch (_: Exception) {
+            imageView.setImageResource(fallbackRes)
+        }
     }
 
     private fun saveCompletedRideToFirestore() {
@@ -484,8 +584,14 @@ class RideTrackingActivity : AppCompatActivity() {
 
         try {
             val provider = when {
-                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> LocationManager.NETWORK_PROVIDER
+                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> {
+                    LocationManager.GPS_PROVIDER
+                }
+
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> {
+                    LocationManager.NETWORK_PROVIDER
+                }
+
                 else -> null
             }
 
@@ -612,6 +718,7 @@ class RideTrackingActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+
         try {
             if (::locationManager.isInitialized && hasLocationPermission()) {
                 currentLocationListener?.let { locationManager.removeUpdates(it) }
@@ -619,5 +726,13 @@ class RideTrackingActivity : AppCompatActivity() {
         } catch (_: SecurityException) {
         } catch (_: Exception) {
         }
+
+        currentLocationListener = null
+
+        rideStatusListener?.remove()
+        rideStatusListener = null
+
+        chatToastListener?.remove()
+        chatToastListener = null
     }
 }

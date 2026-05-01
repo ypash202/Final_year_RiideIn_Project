@@ -38,8 +38,10 @@
                 android:id="@+id/backButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:alpha="0.35"
                 android:background="@android:color/transparent"
                 android:contentDescription="@string/back"
+                android:enabled="false"
                 android:padding="12dp"
                 android:src="@drawable/ic_back_custom"
                 app:tint="@android:color/white" />
@@ -94,7 +96,7 @@
         <LinearLayout
             android:id="@+id/bottomCard"
             android:layout_width="match_parent"
-            android:layout_height="310dp"
+            android:layout_height="365dp"
             android:layout_alignParentBottom="true"
             android:background="@drawable/driver_request_sheet_bg"
             android:orientation="vertical"
@@ -147,9 +149,34 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/contactCustomerRow"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="14dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:contentDescription="@string/contact_customer"
+                    android:src="@drawable/contact_icon"
+                    app:tint="#62CFE3" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="@string/contact_customer"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="12dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -171,7 +198,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="14dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
