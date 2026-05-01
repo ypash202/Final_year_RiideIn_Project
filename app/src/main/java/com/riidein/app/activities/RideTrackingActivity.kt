@@ -426,11 +426,13 @@ class RideTrackingActivity : AppCompatActivity() {
 
     private fun openCancelRidePage() {
         val intent = Intent(this, CancelRideActivity::class.java)
+        intent.putExtra("request_id", requestId)
         intent.putExtra("driver_name", driverName)
         intent.putExtra("vehicle_name", driverVehicleText.text.toString())
         intent.putExtra("vehicle_number", vehicleNumber)
         intent.putExtra("from_location", fromLocation)
         intent.putExtra("to_location", toLocation)
+        intent.putExtra("fare", selectedPrice)
         startActivity(intent)
     }
 

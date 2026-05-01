@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".activities.HistoryActivity">
 
-    <!-- Background -->
     <ImageView
         android:id="@+id/mapBackground"
         android:layout_width="match_parent"
@@ -15,13 +14,11 @@
         android:scaleType="centerCrop"
         android:src="@drawable/map_bg" />
 
-    <!-- Dark overlay -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#99000000" />
 
-    <!-- Main content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -31,7 +28,6 @@
         android:paddingEnd="20dp"
         android:paddingBottom="20dp">
 
-        <!-- Top bar -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="56dp">
@@ -69,61 +65,65 @@
                 android:padding="12dp"
                 android:src="@drawable/ic_delete_custom"
                 app:tint="@android:color/white" />
+
         </RelativeLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="34dp" />
 
-        <!-- Search bar -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="46dp"
             android:background="@drawable/history_search_bg"
             android:paddingStart="12dp"
-            android:paddingEnd="8dp">
+            android:paddingEnd="12dp">
 
             <ImageView
                 android:id="@+id/searchIcon"
-                android:layout_width="18dp"
-                android:layout_height="18dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:contentDescription="@null"
+                android:clickable="true"
+                android:contentDescription="@string/search_here"
+                android:focusable="true"
+                android:padding="2dp"
                 android:src="@drawable/ic_history_search"
                 app:tint="#67D9F4" />
 
             <EditText
                 android:id="@+id/searchEditText"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_toEndOf="@id/searchIcon"
-                android:layout_toStartOf="@id/micButton"
-                android:layout_marginStart="10dp"
+                android:layout_toStartOf="@id/searchIcon"
+                android:layout_marginEnd="10dp"
                 android:background="@android:color/transparent"
                 android:gravity="center_vertical"
                 android:hint="@string/search_here"
+                android:imeOptions="actionSearch"
                 android:inputType="text"
+                android:singleLine="true"
                 android:textColor="@android:color/white"
                 android:textColorHint="#8A8A8A"
                 android:textSize="14sp" />
 
-            <ImageButton
-                android:id="@+id/micButton"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="4dp"
-                android:background="@drawable/mic_circle_bg"
-                android:contentDescription="@string/search_voice"
-                android:padding="7dp"
-                android:src="@drawable/ic_history_mic"
-                app:tint="#8A8A8A" />
         </RelativeLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="18dp" />
+
+        <TextView
+            android:id="@+id/emptyStateText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingTop="32dp"
+            android:text="No history found"
+            android:textColor="#BDBDBD"
+            android:textSize="16sp"
+            android:visibility="gone" />
 
         <ScrollView
             android:layout_width="match_parent"
@@ -132,366 +132,11 @@
             android:scrollbars="none">
 
             <LinearLayout
+                android:id="@+id/historyContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical" />
 
-                <!-- Card 1 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/history_card_bg"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="top"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:contentDescription="@null"
-                                    android:src="@drawable/ic_pickup_pin" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="10dp"
-                                    android:text="7958 Swift Village"
-                                    android:textColor="@android:color/white"
-                                    android:textSize="16sp" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="16dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:contentDescription="@null"
-                                    android:src="@drawable/ic_drop_pin" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="10dp"
-                                    android:text="105 William St, Chicago, US"
-                                    android:textColor="@android:color/white"
-                                    android:textSize="16sp" />
-                            </LinearLayout>
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="14dp"
-                        android:layout_marginBottom="12dp"
-                        android:background="#14FFFFFF" />
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentStart="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_dollar_circle" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:text="$75.00"
-                                android:textColor="@android:color/white"
-                                android:textSize="16sp" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Confirm"
-                                android:textColor="#2C5BFF"
-                                android:textSize="15sp" />
-
-                            <ImageView
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:layout_marginStart="8dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_chevron_right_custom"
-                                app:tint="@android:color/white" />
-                        </LinearLayout>
-                    </RelativeLayout>
-                </LinearLayout>
-
-                <!-- Card 2 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/history_card_bg"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_pickup_pin" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:text="026 Mitchell Burg Apt. 574"
-                                android:textColor="@android:color/white"
-                                android:textSize="16sp" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_drop_pin" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:text="324 Lottie Views Suite 426"
-                                android:textColor="@android:color/white"
-                                android:textSize="16sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="14dp"
-                        android:layout_marginBottom="12dp"
-                        android:background="#14FFFFFF" />
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentStart="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_dollar_circle" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:text="$30.00"
-                                android:textColor="@android:color/white"
-                                android:textSize="16sp" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Completed"
-                                android:textColor="#00E58B"
-                                android:textSize="15sp" />
-
-                            <ImageView
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:layout_marginStart="8dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_chevron_right_custom"
-                                app:tint="@android:color/white" />
-                        </LinearLayout>
-                    </RelativeLayout>
-                </LinearLayout>
-
-                <!-- Card 3 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/history_card_bg"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_pickup_pin" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:text="89 Stacy Falls Suite 953"
-                                android:textColor="@android:color/white"
-                                android:textSize="16sp" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_drop_pin" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:text="080 Joaquin Isle Suite 865"
-                                android:textColor="@android:color/white"
-                                android:textSize="16sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="14dp"
-                        android:layout_marginBottom="12dp"
-                        android:background="#14FFFFFF" />
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentStart="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_dollar_circle" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:text="$35.00"
-                                android:textColor="@android:color/white"
-                                android:textSize="16sp" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Cancelled"
-                                android:textColor="#A0A0A0"
-                                android:textSize="15sp" />
-
-                            <ImageView
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:layout_marginStart="8dp"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_chevron_right_custom"
-                                app:tint="@android:color/white" />
-                        </LinearLayout>
-                    </RelativeLayout>
-                </LinearLayout>
-
-            </LinearLayout>
         </ScrollView>
 
     </LinearLayout>

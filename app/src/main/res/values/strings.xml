@@ -236,6 +236,10 @@
     <string name="go_to_login">Go to Login</string>
     <string name="messages_screen">Messages screen</string>
 
+    <string name="current_location">Current location</string>
+    <string name="where_are_you_going">Where are you going?</string>
+    <string name="motor_bike">MOTOR-BIKE</string>
+
 
 
 </resources>

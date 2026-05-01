@@ -4,17 +4,25 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.firestore.FirebaseFirestore
 import com.riidein.app.R
 
 class CancelRideActivity : AppCompatActivity() {
 
+    private val db = FirebaseFirestore.getInstance()
+
+    private var requestId: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cancel_ride)
+
+        requestId = intent.getStringExtra("request_id") ?: ""
 
         val backButton = findViewById<ImageButton>(R.id.backButton)
         val closeButton = findViewById<ImageButton>(R.id.closeButton)
@@ -24,8 +32,8 @@ class CancelRideActivity : AppCompatActivity() {
         val driverNameText = findViewById<TextView>(R.id.driverName)
         val vehicleNameText = findViewById<TextView>(R.id.vehicleName)
 
-        val driverName = intent.getStringExtra("driver_name") ?: "Binod"
-        val vehicleName = intent.getStringExtra("vehicle_name") ?: "MOTOR-BIKE Honda"
+        val driverName = intent.getStringExtra("driver_name") ?: "Driver"
+        val vehicleName = intent.getStringExtra("vehicle_name") ?: "MOTOR-BIKE"
 
         driverNameText.text = driverName
         vehicleNameText.text = vehicleName
@@ -47,18 +55,64 @@ class CancelRideActivity : AppCompatActivity() {
                     "Please select a reason first",
                     Toast.LENGTH_SHORT
                 ).show()
-            } else {
+                return@setOnClickListener
+            }
+
+            val selectedReason = findViewById<RadioButton>(selectedReasonId)
+                ?.text
+                ?.toString()
+                ?: "No reason selected"
+
+            cancelRideByCustomer(selectedReason)
+        }
+    }
+
+    private fun cancelRideByCustomer(reason: String) {
+        if (requestId.isBlank()) {
+            Toast.makeText(
+                this,
+                "Ride request not found",
+                Toast.LENGTH_SHORT
+            ).show()
+            goToCustomerHome()
+            return
+        }
+
+        val updates = mapOf(
+            "status" to "cancelled_by_customer",
+            "cancelledBy" to "customer",
+            "cancelReason" to reason,
+            "cancelledAt" to System.currentTimeMillis(),
+            "driverNotified" to false,
+            "hiddenFromCustomer" to false,
+            "hiddenFromDriver" to false
+        )
+
+        db.collection("ride_requests")
+            .document(requestId)
+            .update(updates)
+            .addOnSuccessListener {
                 Toast.makeText(
                     this,
                     "Your ride has been successfully cancelled",
                     Toast.LENGTH_SHORT
                 ).show()
 
-                val intent = Intent(this, CustomerHomeActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(intent)
-                finish()
+                goToCustomerHome()
             }
-        }
+            .addOnFailureListener {
+                Toast.makeText(
+                    this,
+                    "Failed to cancel ride",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+    }
+
+    private fun goToCustomerHome() {
+        val intent = Intent(this, CustomerHomeActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+        finish()
     }
 }
