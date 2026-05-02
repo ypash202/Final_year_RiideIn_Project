@@ -11,10 +11,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.riidein.app.R
+import com.riidein.app.utils.ProfileImageHelper
 
 class DriverArrivedNavigateActivity : AppCompatActivity() {
 
@@ -23,15 +23,21 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
     private var requestId = ""
     private var customerId = ""
     private var customerName = ""
+    private var customerProfileImageUri = ""
+    private var customerProfileImageBase64 = ""
+
     private var pickupLocation = ""
     private var dropLocation = ""
     private var fare = ""
     private var vehicleType = ""
-    private var driverArrived = false
 
-    private var customerCancelListener: ListenerRegistration? = null
+    private var driverArrived = false
+    private var rideCompleted = false
+    private var customerCancellationHandled = false
+    private var sosHandled = false
+
+    private var rideDocumentListener: ListenerRegistration? = null
     private var chatToastListener: ListenerRegistration? = null
-    private var hasHandledCustomerCancellation = false
 
     private lateinit var arrivedButton: Button
     private lateinit var backButton: ImageButton
@@ -47,7 +53,7 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         readIntentData()
         bindData()
         setupClicks()
-        listenForCustomerCancellation()
+        listenForRideDocumentUpdates()
         listenForIncomingRideMessages()
     }
 
@@ -63,6 +69,17 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         requestId = intent.getStringExtra("request_id") ?: ""
         customerId = intent.getStringExtra("customer_id") ?: ""
         customerName = intent.getStringExtra("customer_name") ?: "Customer"
+
+        customerProfileImageUri =
+            intent.getStringExtra("customer_profile_image_uri")
+                ?: intent.getStringExtra("customerProfileImageUri")
+                        ?: ""
+
+        customerProfileImageBase64 =
+            intent.getStringExtra("customer_profile_image_base64")
+                ?: intent.getStringExtra("customerProfileImageBase64")
+                        ?: ""
+
         pickupLocation = intent.getStringExtra("pickup") ?: "Pickup"
         dropLocation = intent.getStringExtra("drop") ?: "Drop"
         fare = intent.getStringExtra("fare") ?: "Rs 0"
@@ -74,6 +91,22 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.pickupText).text = pickupLocation
         findViewById<TextView>(R.id.dropText).text = dropLocation
         findViewById<TextView>(R.id.fareText).text = fare
+
+        val customerImage = findViewById<ImageView>(R.id.profileImage)
+
+        if (customerProfileImageBase64.isNotBlank()) {
+            ProfileImageHelper.loadBase64IntoImageView(
+                imageView = customerImage,
+                base64Image = customerProfileImageBase64,
+                fallbackRes = R.drawable.profile1
+            )
+        } else {
+            ProfileImageHelper.loadUriIntoImageView(
+                imageView = customerImage,
+                uriString = customerProfileImageUri,
+                fallbackRes = R.drawable.profile1
+            )
+        }
 
         val vehicleInfoTop = findViewById<TextView>(R.id.vehicleInfoTop)
         val vehicleImage = findViewById<ImageView>(R.id.bikeImage)
@@ -120,10 +153,12 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         }
 
         arrivedButton.setOnClickListener {
-            if (!driverArrived) {
-                markDriverArrived()
-            } else {
-                completeRide()
+            when {
+                rideCompleted -> openDriverHome()
+
+                !driverArrived -> markDriverArrived()
+
+                else -> completeRide()
             }
         }
     }
@@ -135,14 +170,88 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         intent.putExtra("contact_role", "customer")
         intent.putExtra("contact_user_id", customerId)
         intent.putExtra("contact_name", customerName)
+        intent.putExtra("contact_photo_url", customerProfileImageUri)
+        intent.putExtra("contact_photo_base64", customerProfileImageBase64)
         intent.putExtra("return_to_ride", true)
         startActivity(intent)
     }
 
-    private fun listenForIncomingRideMessages() {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
+    private fun listenForRideDocumentUpdates() {
         if (requestId.isBlank()) return
+
+        rideDocumentListener?.remove()
+
+        rideDocumentListener = db.collection("ride_requests")
+            .document(requestId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null || !snapshot.exists()) {
+                    return@addSnapshotListener
+                }
+
+                val status = snapshot.getString("status") ?: ""
+
+                when (status) {
+                    "arrived" -> {
+                        driverArrived = true
+                    }
+
+                    "in_progress" -> {
+                        driverArrived = true
+
+                        if (!rideCompleted) {
+                            arrivedButton.isEnabled = true
+                            arrivedButton.alpha = 1f
+                            arrivedButton.text = getString(R.string.complete_ride)
+                        }
+                    }
+
+                    "completed" -> {
+                        rideCompleted = true
+                    }
+
+                    "cancelled_by_customer" -> {
+                        if (!customerCancellationHandled) {
+                            customerCancellationHandled = true
+
+                            Toast.makeText(
+                                this,
+                                "Your ride has been cancelled by the customer",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            db.collection("ride_requests")
+                                .document(requestId)
+                                .update("driverNotified", true)
+
+                            openDriverHomeAfterCustomerCancel()
+                        }
+                    }
+                }
+
+                val sosActive = snapshot.getBoolean("sosActive") ?: false
+                val driverNotifiedSos = snapshot.getBoolean("driverNotifiedSos") ?: false
+
+                if (sosActive && !driverNotifiedSos && !sosHandled) {
+                    sosHandled = true
+
+                    Toast.makeText(
+                        this,
+                        "Emergency alert: customer tapped SOS",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    db.collection("ride_requests")
+                        .document(requestId)
+                        .update("driverNotifiedSos", true)
+                }
+            }
+    }
+
+    private fun listenForIncomingRideMessages() {
+        if (requestId.isBlank()) return
+
+        val currentUserId =
+            com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         chatToastListener?.remove()
 
@@ -169,50 +278,9 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
             }
     }
 
-    private fun listenForCustomerCancellation() {
-        if (requestId.isBlank()) {
-            return
-        }
-
-        customerCancelListener?.remove()
-
-        customerCancelListener = db.collection("ride_requests")
-            .document(requestId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null || !snapshot.exists()) {
-                    return@addSnapshotListener
-                }
-
-                val status = snapshot.getString("status") ?: ""
-
-                if (status == "cancelled_by_customer" && !hasHandledCustomerCancellation) {
-                    hasHandledCustomerCancellation = true
-
-                    customerCancelListener?.remove()
-                    customerCancelListener = null
-
-                    db.collection("ride_requests")
-                        .document(requestId)
-                        .update("driverNotified", true)
-
-                    Toast.makeText(
-                        this,
-                        "Your ride has been cancelled by the customer",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    goBackToWaitingForRequestPage()
-                }
-            }
-    }
-
     private fun openNavigationToCustomer() {
         if (pickupLocation.isBlank()) {
-            Toast.makeText(
-                this,
-                "Pickup location not found",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(this, "Pickup location not found", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -225,32 +293,37 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
         } catch (_: Exception) {
             val browserUri =
                 "https://www.google.com/maps/search/?api=1&query=${Uri.encode(pickupLocation)}".toUri()
-
             startActivity(Intent(Intent.ACTION_VIEW, browserUri))
         }
     }
 
     private fun markDriverArrived() {
         if (requestId.isBlank()) {
-            Toast.makeText(
-                this,
-                "Ride request not found",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(this, "Ride request not found", Toast.LENGTH_SHORT).show()
             return
         }
 
+        val updates = mapOf(
+            "status" to "arrived",
+            "arrivedAt" to System.currentTimeMillis(),
+            "customerNotified" to false,
+            "driverNotified" to true
+        )
+
         db.collection("ride_requests")
             .document(requestId)
-            .update("status", "arrived")
+            .update(updates)
             .addOnSuccessListener {
                 driverArrived = true
-                arrivedButton.text = getString(R.string.complete_ride)
+
+                arrivedButton.text = "Waiting for customer"
+                arrivedButton.isEnabled = false
+                arrivedButton.alpha = 0.6f
 
                 Toast.makeText(
                     this,
-                    "Customer has been notified. Complete the ride after drop-off.",
-                    Toast.LENGTH_SHORT
+                    "Customer has been notified. Wait for customer to start the ride.",
+                    Toast.LENGTH_LONG
                 ).show()
             }
             .addOnFailureListener {
@@ -264,38 +337,39 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
 
     private fun completeRide() {
         if (requestId.isBlank()) {
-            Toast.makeText(
-                this,
-                "Ride request not found",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(this, "Ride request not found", Toast.LENGTH_SHORT).show()
             return
         }
 
         val updates = mapOf(
             "status" to "completed",
             "completedAt" to System.currentTimeMillis(),
+            "completedBy" to "driver",
             "hiddenFromCustomer" to false,
-            "hiddenFromDriver" to false
+            "hiddenFromDriver" to false,
+            "customerNotified" to false,
+            "driverNotified" to true
         )
 
         db.collection("ride_requests")
             .document(requestId)
             .update(updates)
             .addOnSuccessListener {
-                customerCancelListener?.remove()
-                customerCancelListener = null
+                rideCompleted = true
+
+                arrivedButton.text = getString(R.string.back_to_home)
+                arrivedButton.isEnabled = true
+                arrivedButton.alpha = 1f
 
                 Toast.makeText(
                     this,
-                    "Ride completed successfully",
-                    Toast.LENGTH_SHORT
+                    "Ride completed successfully. Customer has been notified.",
+                    Toast.LENGTH_LONG
                 ).show()
 
-                val intent = Intent(this, DriverHomeActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(intent)
-                finish()
+                arrivedButton.postDelayed({
+                    openDriverHome()
+                }, 1200)
             }
             .addOnFailureListener {
                 Toast.makeText(
@@ -308,33 +382,32 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
 
     private fun cancelRideByDriver() {
         if (requestId.isBlank()) {
-            goBackToDriverHome()
+            Toast.makeText(this, "Ride request not found", Toast.LENGTH_SHORT).show()
+            openDriverHome()
             return
         }
 
         val updates = mapOf(
             "status" to "cancelled_by_driver",
-            "cancelledBy" to "driver",
             "cancelledAt" to System.currentTimeMillis(),
-            "customerNotified" to false,
+            "cancelledBy" to "driver",
             "hiddenFromCustomer" to false,
-            "hiddenFromDriver" to false
+            "hiddenFromDriver" to false,
+            "customerNotified" to false,
+            "driverNotified" to true
         )
 
         db.collection("ride_requests")
             .document(requestId)
             .update(updates)
             .addOnSuccessListener {
-                customerCancelListener?.remove()
-                customerCancelListener = null
-
                 Toast.makeText(
                     this,
                     "Ride cancelled",
                     Toast.LENGTH_SHORT
                 ).show()
 
-                goBackToDriverHome()
+                openDriverHome()
             }
             .addOnFailureListener {
                 Toast.makeText(
@@ -345,24 +418,30 @@ class DriverArrivedNavigateActivity : AppCompatActivity() {
             }
     }
 
-    private fun goBackToWaitingForRequestPage() {
-        val intent = Intent(this, DriverRideRequestActivity::class.java)
+    private fun openDriverHomeAfterCustomerCancel() {
+        val intent = Intent(this, DriverHomeActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        intent.putExtra("show_online_page", true)
+        intent.putExtra("customer_cancelled_ride", true)
+        intent.putExtra("driver_status", "online")
         startActivity(intent)
         finish()
     }
 
-    private fun goBackToDriverHome() {
+    private fun openDriverHome() {
         val intent = Intent(this, DriverHomeActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        intent.putExtra("show_online_page", true)
+        intent.putExtra("driver_status", "online")
         startActivity(intent)
         finish()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        customerCancelListener?.remove()
-        customerCancelListener = null
+
+        rideDocumentListener?.remove()
+        rideDocumentListener = null
 
         chatToastListener?.remove()
         chatToastListener = null

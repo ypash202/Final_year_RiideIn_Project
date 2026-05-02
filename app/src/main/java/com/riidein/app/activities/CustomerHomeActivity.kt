@@ -46,14 +46,17 @@ class CustomerHomeActivity : AppCompatActivity() {
         }
 
         menuButton.setOnClickListener {
-            startActivity(Intent(this@CustomerHomeActivity, SideMenuActivity::class.java).apply {
-                putExtra("user_role", "customer")
-                putExtra("selected_menu", "home")
-            })
+            startActivity(
+                Intent(this@CustomerHomeActivity, SideMenuActivity::class.java).apply {
+                    putExtra("user_role", "customer")
+                    putExtra("selected_menu", "home")
+                }
+            )
         }
 
         closeButton.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
+
             val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
@@ -82,13 +85,14 @@ class CustomerHomeActivity : AppCompatActivity() {
         val webSettings: WebSettings = webView.settings
         webSettings.javaScriptEnabled = true
         webSettings.domStorageEnabled = true
-        webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+        webSettings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
         webSettings.allowFileAccess = true
         webSettings.allowContentAccess = true
         webSettings.loadsImagesAutomatically = true
         webSettings.useWideViewPort = true
         webSettings.loadWithOverviewMode = true
 
+        webView.setLayerType(WebView.LAYER_TYPE_HARDWARE, null)
         webView.loadUrl("file:///android_asset/map.html")
     }
 

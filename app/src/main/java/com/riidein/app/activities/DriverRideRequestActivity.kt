@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -13,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.riidein.app.R
+import com.riidein.app.utils.ProfileImageHelper
 
 class DriverRideRequestActivity : AppCompatActivity() {
 
@@ -29,19 +31,22 @@ class DriverRideRequestActivity : AppCompatActivity() {
     private lateinit var declineButton: Button
     private lateinit var backButton: ImageButton
     private lateinit var closeButton: ImageButton
+    private lateinit var profileImage: ImageView
 
     private var currentRequestId: String = ""
     private var currentCustomerId: String = ""
     private var currentCustomerName: String = ""
+    private var currentCustomerProfileImageUri: String = ""
+    private var currentCustomerProfileImageBase64: String = ""
     private var currentPickup: String = ""
     private var currentDrop: String = ""
     private var currentFare: String = ""
     private var currentVehicleType: String = ""
 
     private var requestListListener: ListenerRegistration? = null
-    private var currentRideStatusListener: ListenerRegistration? = null
+    private var currentRequestListener: ListenerRegistration? = null
 
-    private var hasHandledCustomerCancellation = false
+    private var customerCancelHandled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +69,13 @@ class DriverRideRequestActivity : AppCompatActivity() {
         declineButton = findViewById(R.id.declineButton)
         backButton = findViewById(R.id.backButton)
         closeButton = findViewById(R.id.closeButton)
+        profileImage = findViewById(R.id.profileImage)
+    }
+
+    private fun hideRequest() {
+        statusText.text = "Waiting for request..."
+        requestCard.visibility = View.GONE
+        profileImage.setImageResource(R.drawable.profile1)
     }
 
     private fun setupClicks() {
@@ -84,11 +96,6 @@ class DriverRideRequestActivity : AppCompatActivity() {
         }
     }
 
-    private fun hideRequest() {
-        statusText.text = "Waiting for request..."
-        requestCard.visibility = View.GONE
-    }
-
     private fun listenForRideRequest() {
         val currentUser = auth.currentUser
 
@@ -105,11 +112,7 @@ class DriverRideRequestActivity : AppCompatActivity() {
             .whereEqualTo("status", "pending")
             .addSnapshotListener { value, error ->
                 if (error != null) {
-                    Toast.makeText(
-                        this,
-                        "Failed to load request",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(this, "Failed to load request", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
@@ -125,6 +128,8 @@ class DriverRideRequestActivity : AppCompatActivity() {
                 currentRequestId = doc.id
                 currentCustomerId = doc.getString("customerId") ?: ""
                 currentCustomerName = doc.getString("customerName") ?: "Customer"
+                currentCustomerProfileImageUri = doc.getString("customerProfileImageUri") ?: ""
+                currentCustomerProfileImageBase64 = doc.getString("customerProfileImageBase64") ?: ""
                 currentPickup = doc.getString("pickup") ?: "Pickup"
                 currentDrop = doc.getString("drop") ?: "Drop"
                 currentFare = doc.getString("fare") ?: "Rs 0"
@@ -135,21 +140,22 @@ class DriverRideRequestActivity : AppCompatActivity() {
                 dropoffText.text = currentDrop
                 fareText.text = currentFare
 
+                loadCustomerImage()
+
                 statusText.text = "You’re online"
                 requestCard.visibility = View.VISIBLE
 
-                listenForCustomerCancellation(currentRequestId)
+                listenToCurrentRequestDocument(currentRequestId)
             }
     }
 
-    private fun listenForCustomerCancellation(requestId: String) {
-        if (requestId.isBlank()) {
-            return
-        }
+    private fun listenToCurrentRequestDocument(requestId: String) {
+        if (requestId.isBlank()) return
 
-        currentRideStatusListener?.remove()
+        customerCancelHandled = false
+        currentRequestListener?.remove()
 
-        currentRideStatusListener = db.collection("ride_requests")
+        currentRequestListener = db.collection("ride_requests")
             .document(requestId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null || !snapshot.exists()) {
@@ -158,31 +164,43 @@ class DriverRideRequestActivity : AppCompatActivity() {
 
                 val status = snapshot.getString("status") ?: ""
 
-                if (status == "cancelled_by_customer" && !hasHandledCustomerCancellation) {
-                    hasHandledCustomerCancellation = true
+                if (status == "cancelled_by_customer" && !customerCancelHandled) {
+                    customerCancelHandled = true
+
+                    Toast.makeText(
+                        this,
+                        "Customer cancelled the request",
+                        Toast.LENGTH_LONG
+                    ).show()
 
                     db.collection("ride_requests")
                         .document(requestId)
                         .update("driverNotified", true)
 
-                    Toast.makeText(
-                        this,
-                        "Customer has cancelled the ride",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    goBackToDriverOnlinePage()
+                    goBackToDriverHomeAfterCustomerCancel()
                 }
             }
     }
 
+    private fun loadCustomerImage() {
+        if (currentCustomerProfileImageBase64.isNotBlank()) {
+            ProfileImageHelper.loadBase64IntoImageView(
+                imageView = profileImage,
+                base64Image = currentCustomerProfileImageBase64,
+                fallbackRes = R.drawable.profile1
+            )
+        } else {
+            ProfileImageHelper.loadUriIntoImageView(
+                imageView = profileImage,
+                uriString = currentCustomerProfileImageUri,
+                fallbackRes = R.drawable.profile1
+            )
+        }
+    }
+
     private fun acceptRide() {
         if (currentRequestId.isBlank()) {
-            Toast.makeText(
-                this,
-                "No ride request selected",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(this, "No ride request selected", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -196,6 +214,8 @@ class DriverRideRequestActivity : AppCompatActivity() {
                 intent.putExtra("request_id", currentRequestId)
                 intent.putExtra("customer_id", currentCustomerId)
                 intent.putExtra("customer_name", currentCustomerName)
+                intent.putExtra("customer_profile_image_uri", currentCustomerProfileImageUri)
+                intent.putExtra("customer_profile_image_base64", currentCustomerProfileImageBase64)
                 intent.putExtra("pickup", currentPickup)
                 intent.putExtra("drop", currentDrop)
                 intent.putExtra("fare", currentFare)
@@ -203,21 +223,13 @@ class DriverRideRequestActivity : AppCompatActivity() {
                 startActivity(intent)
             }
             .addOnFailureListener {
-                Toast.makeText(
-                    this,
-                    "Failed to accept ride",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, "Failed to accept ride", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun declineRide() {
         if (currentRequestId.isBlank()) {
-            Toast.makeText(
-                this,
-                "No ride request selected",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(this, "No ride request selected", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -227,24 +239,18 @@ class DriverRideRequestActivity : AppCompatActivity() {
                 mapOf(
                     "status" to "declined",
                     "declinedBy" to "driver",
-                    "declinedAt" to System.currentTimeMillis()
+                    "declinedAt" to System.currentTimeMillis(),
+                    "hiddenFromCustomer" to false,
+                    "hiddenFromDriver" to false
                 )
             )
             .addOnSuccessListener {
                 Toast.makeText(this, "Ride declined", Toast.LENGTH_SHORT).show()
-
-                currentRideStatusListener?.remove()
-                currentRideStatusListener = null
-
                 clearCurrentRide()
                 hideRequest()
             }
             .addOnFailureListener {
-                Toast.makeText(
-                    this,
-                    "Failed to decline ride",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, "Failed to decline ride", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -252,19 +258,21 @@ class DriverRideRequestActivity : AppCompatActivity() {
         currentRequestId = ""
         currentCustomerId = ""
         currentCustomerName = ""
+        currentCustomerProfileImageUri = ""
+        currentCustomerProfileImageBase64 = ""
         currentPickup = ""
         currentDrop = ""
         currentFare = ""
         currentVehicleType = ""
-        hasHandledCustomerCancellation = false
+        customerCancelHandled = false
     }
 
-    private fun goBackToDriverOnlinePage() {
-        currentRideStatusListener?.remove()
-        currentRideStatusListener = null
-
+    private fun goBackToDriverHomeAfterCustomerCancel() {
         requestListListener?.remove()
         requestListListener = null
+
+        currentRequestListener?.remove()
+        currentRequestListener = null
 
         val intent = Intent(this, DriverHomeActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
@@ -286,10 +294,7 @@ class DriverRideRequestActivity : AppCompatActivity() {
         db.collection("users")
             .document(currentUser.uid)
             .update("isAvailable", false)
-            .addOnSuccessListener {
-                finish()
-            }
-            .addOnFailureListener {
+            .addOnCompleteListener {
                 finish()
             }
     }
@@ -300,7 +305,7 @@ class DriverRideRequestActivity : AppCompatActivity() {
         requestListListener?.remove()
         requestListListener = null
 
-        currentRideStatusListener?.remove()
-        currentRideStatusListener = null
+        currentRequestListener?.remove()
+        currentRequestListener = null
     }
 }

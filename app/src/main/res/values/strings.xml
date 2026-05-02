@@ -248,10 +248,22 @@
 
     <string name="contact_customer">Contact customer</string>
     <string name="call">Call</string>
-    <string name="type_message">Type a message...</string>
+    <string name="type_message">Type a message!</string>
     <string name="start_conversation">Start your conversation</string>
     <string name="chat_unavailable">Chat is not available.</string>
 
+    <string name="driver_eta_minutes">%1$d min</string>
+    <string name="driver_declined_request">%1$s declined your request</string>
+    <string name="driver_cancelled_request">%1$s cancelled your request</string>
+    <string name="request_sent_to_driver">Request sent to %1$s</string>
+    <string name="loading_available_drivers">Loading available drivers...</string>
+    <string name="failed_to_load_drivers">Failed to load drivers</string>
+    <string name="no_more_drivers_available">No more drivers available</string>
+    <string name="no_available_delivery_drivers">No available bike or cab drivers found for delivery</string>
+    <string name="no_available_selected_drivers">No available %1$s drivers found</string>
+    <string name="please_login_again">Please login again</string>
+    <string name="failed_to_send_request">Failed to send request</string>
+    <string name="failed_to_load_customer_details">Failed to load customer details</string>
     
 </resources>
 

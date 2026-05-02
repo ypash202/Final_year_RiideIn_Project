@@ -1,13 +1,6 @@
 package com.riidein.app.activities
 
-import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
@@ -15,15 +8,13 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.riidein.app.R
+import com.riidein.app.utils.ProfileImageHelper
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -51,21 +42,22 @@ class RideTrackingActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
-    private lateinit var locationManager: LocationManager
 
+    private var requestId: String = ""
+    private var driverId: String = ""
     private var driverName: String = "Binod"
+    private var driverPhotoUrl: String = ""
+    private var driverPhotoBase64: String = ""
+
     private var vehicleName: String = "Moto"
     private var vehicleNumber: String = "BA 01 PA 1234"
     private var selectedPrice: String = "Rs 200"
     private var fromLocation: String = "Boudha"
     private var toLocation: String = "Trade Tower, Thapathali"
 
-    private var requestId: String = ""
-    private var driverId: String = ""
-    private var driverPhotoUrl: String = ""
-
     private var driverHasArrived = false
     private var completedRideSaved = false
+    private var sosAlreadySent = false
 
     private enum class RideState {
         ARRIVING,
@@ -75,27 +67,8 @@ class RideTrackingActivity : AppCompatActivity() {
     }
 
     private var currentRideState = RideState.ARRIVING
-    private var currentLocationListener: LocationListener? = null
     private var chatToastListener: ListenerRegistration? = null
     private var rideStatusListener: ListenerRegistration? = null
-
-    private val locationPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                    permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-
-            if (granted) {
-                fetchCurrentLocationAndTriggerSos()
-            } else {
-                Toast.makeText(
-                    this,
-                    getString(R.string.location_permission_denied_sos),
-                    Toast.LENGTH_SHORT
-                ).show()
-                saveSosAlertToFirestore(null, null)
-                openPoliceDialer()
-            }
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,7 +76,6 @@ class RideTrackingActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
-        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
         initViews()
         readIntentData()
@@ -141,9 +113,19 @@ class RideTrackingActivity : AppCompatActivity() {
         requestId = intent.getStringExtra("request_id") ?: ""
         driverId = intent.getStringExtra("driver_id") ?: ""
         driverName = intent.getStringExtra("driver_name") ?: "Binod"
-        driverPhotoUrl = intent.getStringExtra("driver_photo_url") ?: ""
+
+        driverPhotoUrl =
+            intent.getStringExtra("driver_profile_image_uri")
+                ?: intent.getStringExtra("driver_photo_url")
+                        ?: ""
+
+        driverPhotoBase64 =
+            intent.getStringExtra("driver_profile_image_base64")
+                ?: intent.getStringExtra("driver_photo_base64")
+                        ?: ""
 
         vehicleName = intent.getStringExtra("vehicle_name") ?: "Moto"
+
         vehicleNumber = intent.getStringExtra("vehicle_number") ?: when (driverName.lowercase()) {
             "sulav" -> "BA 02 PA 5678"
             else -> "BA 01 PA 1234"
@@ -169,7 +151,7 @@ class RideTrackingActivity : AppCompatActivity() {
         pickupLocationText.text = fromLocation
         dropLocationText.text = toLocation
 
-        loadProfileImageIntoView(driverProfileImage, driverPhotoUrl, R.drawable.profile2)
+        loadDriverImage()
 
         when (vehicleName.lowercase(Locale.getDefault())) {
             "moto", "bike", "motor-bike", "motorbike" -> vehicleImage.setImageResource(R.drawable.bike)
@@ -177,6 +159,15 @@ class RideTrackingActivity : AppCompatActivity() {
             "delivery" -> vehicleImage.setImageResource(R.drawable.delivery)
             else -> vehicleImage.setImageResource(R.drawable.bike)
         }
+    }
+
+    private fun loadDriverImage() {
+        ProfileImageHelper.loadProfileImage(
+            imageView = driverProfileImage,
+            base64Image = driverPhotoBase64,
+            uriString = driverPhotoUrl,
+            fallbackRes = R.drawable.profile2
+        )
     }
 
     private fun setupClicks() {
@@ -206,6 +197,7 @@ class RideTrackingActivity : AppCompatActivity() {
             intent.putExtra("contact_user_id", driverId)
             intent.putExtra("contact_name", driverName)
             intent.putExtra("contact_photo_url", driverPhotoUrl)
+            intent.putExtra("contact_photo_base64", driverPhotoBase64)
             intent.putExtra("return_to_ride", true)
             startActivity(intent)
         }
@@ -213,7 +205,6 @@ class RideTrackingActivity : AppCompatActivity() {
         cancelRideButton.setOnClickListener {
             when (currentRideState) {
                 RideState.ARRIVING -> openCancelRidePage()
-
                 RideState.ARRIVED -> startRideForCustomer()
 
                 RideState.IN_PROGRESS -> {
@@ -262,10 +253,22 @@ class RideTrackingActivity : AppCompatActivity() {
         updateRideStateUI()
         disableNextUntilDriverCompletes()
 
+        if (requestId.isNotBlank()) {
+            db.collection("ride_requests")
+                .document(requestId)
+                .update(
+                    mapOf(
+                        "status" to "in_progress",
+                        "startedAt" to System.currentTimeMillis(),
+                        "startedBy" to "customer"
+                    )
+                )
+        }
+
         Toast.makeText(
             this,
             "Ride started. You are now on your trip.",
-            Toast.LENGTH_SHORT
+            Toast.LENGTH_LONG
         ).show()
     }
 
@@ -353,48 +356,66 @@ class RideTrackingActivity : AppCompatActivity() {
 
                 val status = snapshot.getString("status") ?: ""
 
-                if (status == "arrived" && !driverHasArrived) {
-                    driverHasArrived = true
-                    currentRideState = RideState.ARRIVED
-                    updateRideStateUI()
-                    enableNextAfterDriverArrives()
+                when (status) {
+                    "arrived" -> {
+                        if (!driverHasArrived) {
+                            driverHasArrived = true
+                            currentRideState = RideState.ARRIVED
+                            updateRideStateUI()
+                            enableNextAfterDriverArrives()
 
-                    Toast.makeText(
-                        this,
-                        "Your driver has arrived. You can start the ride now.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+                            Toast.makeText(
+                                this,
+                                "Your driver has arrived. Tap Start Ride.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
 
-                if (status == "completed" && !completedRideSaved) {
-                    completedRideSaved = true
-                    currentRideState = RideState.COMPLETED
-                    updateRideStateUI()
+                    "in_progress" -> {
+                        if (currentRideState != RideState.IN_PROGRESS) {
+                            currentRideState = RideState.IN_PROGRESS
+                            updateRideStateUI()
+                            disableNextUntilDriverCompletes()
+                        }
+                    }
 
-                    Toast.makeText(
-                        this,
-                        "Ride completed successfully. You can return home now.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    "completed" -> {
+                        if (!completedRideSaved) {
+                            completedRideSaved = true
+                            currentRideState = RideState.COMPLETED
+                            updateRideStateUI()
 
-                    saveCompletedRideToFirestore()
-                }
+                            Toast.makeText(
+                                this,
+                                "Ride completed successfully. Returning home.",
+                                Toast.LENGTH_LONG
+                            ).show()
 
-                if (status == "cancelled_by_driver") {
-                    Toast.makeText(
-                        applicationContext,
-                        "Your ride has been cancelled by the driver.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                            saveCompletedRideToFirestore()
 
-                    nextArrow.postDelayed({
-                        val intent = Intent(this, VehicleSelectionActivity::class.java)
-                        intent.putExtra("from_location", fromLocation)
-                        intent.putExtra("to_location", toLocation)
-                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                        startActivity(intent)
-                        finish()
-                    }, 1800)
+                            nextArrow.postDelayed({
+                                goToCustomerHome()
+                            }, 1800)
+                        }
+                    }
+
+                    "cancelled_by_driver" -> {
+                        Toast.makeText(
+                            applicationContext,
+                            "Your ride has been cancelled by the driver.",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        nextArrow.postDelayed({
+                            val intent = Intent(this, VehicleSelectionActivity::class.java)
+                            intent.putExtra("from_location", fromLocation)
+                            intent.putExtra("to_location", toLocation)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                            startActivity(intent)
+                            finish()
+                        }, 1800)
+                    }
                 }
             }
     }
@@ -433,7 +454,7 @@ class RideTrackingActivity : AppCompatActivity() {
 
     private fun loadDriverPhotoFromFirestore() {
         if (driverId.isBlank()) {
-            loadProfileImageIntoView(driverProfileImage, driverPhotoUrl, R.drawable.profile2)
+            loadDriverImage()
             return
         }
 
@@ -441,37 +462,28 @@ class RideTrackingActivity : AppCompatActivity() {
             .document(driverId)
             .get()
             .addOnSuccessListener { document ->
-                driverPhotoUrl = document.getString("driverPhotoUrl")
-                    ?: document.getString("profileImageUrl")
-                            ?: document.getString("profilePhotoUrl")
-                            ?: driverPhotoUrl
+                driverPhotoBase64 =
+                    document.getString("profileImageBase64")
+                        ?: document.getString("driverPhotoBase64")
+                                ?: driverPhotoBase64
 
-                loadProfileImageIntoView(driverProfileImage, driverPhotoUrl, R.drawable.profile2)
+                driverPhotoUrl =
+                    document.getString("profileImageUri")
+                        ?: document.getString("driverPhotoUrl")
+                                ?: document.getString("profileImageUrl")
+                                ?: document.getString("profilePhotoUrl")
+                                ?: driverPhotoUrl
+
+                loadDriverImage()
             }
             .addOnFailureListener {
-                loadProfileImageIntoView(driverProfileImage, driverPhotoUrl, R.drawable.profile2)
+                loadDriverImage()
             }
-    }
-
-    private fun loadProfileImageIntoView(
-        imageView: ImageView,
-        imageUrl: String,
-        fallbackRes: Int
-    ) {
-        if (imageUrl.isBlank()) {
-            imageView.setImageResource(fallbackRes)
-            return
-        }
-
-        try {
-            imageView.setImageURI(Uri.parse(imageUrl))
-        } catch (_: Exception) {
-            imageView.setImageResource(fallbackRes)
-        }
     }
 
     private fun saveCompletedRideToFirestore() {
         val currentUser = auth.currentUser
+
         if (currentUser == null) {
             Toast.makeText(this, getString(R.string.user_not_logged_in), Toast.LENGTH_SHORT).show()
             goToCustomerHome()
@@ -520,6 +532,7 @@ class RideTrackingActivity : AppCompatActivity() {
     private fun goToCustomerHome() {
         val intent = Intent(this, CustomerHomeActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        intent.putExtra("user_role", "customer")
         startActivity(intent)
         finish()
     }
@@ -539,8 +552,8 @@ class RideTrackingActivity : AppCompatActivity() {
     private fun showSosDialog() {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.sos_title))
-            .setMessage(getString(R.string.sos_message_with_location))
-            .setPositiveButton(getString(R.string.call_100)) { _, _ ->
+            .setMessage("Send an emergency alert to the driver and save this SOS record?")
+            .setPositiveButton("Send SOS Alert") { _, _ ->
                 triggerSosFlow()
             }
             .setNegativeButton(getString(R.string.cancel), null)
@@ -548,153 +561,69 @@ class RideTrackingActivity : AppCompatActivity() {
     }
 
     private fun triggerSosFlow() {
-        if (hasLocationPermission()) {
-            fetchCurrentLocationAndTriggerSos()
-        } else {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
-    }
-
-    private fun hasLocationPermission(): Boolean {
-        val fineLocationGranted = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val coarseLocationGranted = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        return fineLocationGranted || coarseLocationGranted
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun fetchCurrentLocationAndTriggerSos() {
-        if (!hasLocationPermission()) {
-            saveSosAlertToFirestore(null, null)
-            openPoliceDialer()
+        if (sosAlreadySent) {
+            Toast.makeText(
+                this,
+                "SOS alert has already been sent for this ride.",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
-        try {
-            val provider = when {
-                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> {
-                    LocationManager.GPS_PROVIDER
-                }
+        if (requestId.isBlank()) {
+            Toast.makeText(
+                this,
+                "Ride request not found. SOS could not be linked to this ride.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
 
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> {
-                    LocationManager.NETWORK_PROVIDER
-                }
+        sosAlreadySent = true
 
-                else -> null
-            }
-
-            if (provider == null) {
-                Toast.makeText(
-                    this,
-                    getString(R.string.no_location_provider),
-                    Toast.LENGTH_SHORT
-                ).show()
-                saveSosAlertToFirestore(null, null)
-                openPoliceDialer()
-                return
-            }
-
-            currentLocationListener = object : LocationListener {
-                override fun onLocationChanged(location: Location) {
-                    try {
-                        if (hasLocationPermission()) {
-                            locationManager.removeUpdates(this)
-                        }
-                    } catch (_: SecurityException) {
-                    }
-
-                    saveSosAlertToFirestore(location.latitude, location.longitude)
-                    openPoliceDialer()
-                }
-            }
-
-            val lastKnown = getLastKnownSafeLocation()
-            if (lastKnown != null && lastKnown.latitude != 0.0 && lastKnown.longitude != 0.0) {
-                saveSosAlertToFirestore(lastKnown.latitude, lastKnown.longitude)
-                openPoliceDialer()
-            } else {
-                locationManager.requestLocationUpdates(
-                    provider,
-                    0L,
-                    0f,
-                    currentLocationListener!!
+        db.collection("ride_requests")
+            .document(requestId)
+            .update(
+                mapOf(
+                    "sosActive" to true,
+                    "sosTriggeredBy" to "customer",
+                    "sosTriggeredAt" to System.currentTimeMillis(),
+                    "driverNotifiedSos" to false
                 )
+            )
+            .addOnSuccessListener {
+                saveSosAlertToFirestore()
 
                 Toast.makeText(
                     this,
-                    getString(R.string.fetching_location_sos),
+                    "SOS alert sent to driver and saved.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            .addOnFailureListener {
+                sosAlreadySent = false
+
+                Toast.makeText(
+                    this,
+                    "Failed to send SOS alert.",
                     Toast.LENGTH_SHORT
                 ).show()
             }
-        } catch (_: SecurityException) {
-            saveSosAlertToFirestore(null, null)
-            openPoliceDialer()
-        } catch (_: Exception) {
-            saveSosAlertToFirestore(null, null)
-            openPoliceDialer()
-        }
     }
 
-    @SuppressLint("MissingPermission")
-    private fun getLastKnownSafeLocation(): Location? {
-        if (!hasLocationPermission()) return null
-
-        return try {
-            val gpsLocation =
-                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                } else {
-                    null
-                }
-
-            val networkLocation =
-                if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                    locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-                } else {
-                    null
-                }
-
-            when {
-                gpsLocation != null && networkLocation != null -> {
-                    if (gpsLocation.time >= networkLocation.time) gpsLocation else networkLocation
-                }
-
-                gpsLocation != null -> gpsLocation
-                else -> networkLocation
-            }
-        } catch (_: SecurityException) {
-            null
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun saveSosAlertToFirestore(latitude: Double?, longitude: Double?) {
+    private fun saveSosAlertToFirestore() {
         val currentUser = auth.currentUser
         val userId = currentUser?.uid ?: "unknown_user"
 
         val sosData = hashMapOf(
+            "requestId" to requestId,
             "userId" to userId,
+            "driverId" to driverId,
             "driverName" to driverName,
             "vehicleName" to driverVehicleText.text.toString(),
             "vehicleNumber" to vehicleNumber,
             "fromLocation" to fromLocation,
             "toLocation" to toLocation,
-            "latitude" to latitude,
-            "longitude" to longitude,
-            "phoneNumber" to "100",
             "timestamp" to System.currentTimeMillis(),
             "status" to "triggered"
         )
@@ -709,25 +638,8 @@ class RideTrackingActivity : AppCompatActivity() {
             }
     }
 
-    private fun openPoliceDialer() {
-        val dialIntent = Intent(Intent.ACTION_DIAL).apply {
-            data = "tel:100".toUri()
-        }
-        startActivity(dialIntent)
-    }
-
     override fun onDestroy() {
         super.onDestroy()
-
-        try {
-            if (::locationManager.isInitialized && hasLocationPermission()) {
-                currentLocationListener?.let { locationManager.removeUpdates(it) }
-            }
-        } catch (_: SecurityException) {
-        } catch (_: Exception) {
-        }
-
-        currentLocationListener = null
 
         rideStatusListener?.remove()
         rideStatusListener = null

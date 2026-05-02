@@ -33,7 +33,7 @@ class CancelRideActivity : AppCompatActivity() {
         val vehicleNameText = findViewById<TextView>(R.id.vehicleName)
 
         val driverName = intent.getStringExtra("driver_name") ?: "Driver"
-        val vehicleName = intent.getStringExtra("vehicle_name") ?: "MOTOR-BIKE"
+        val vehicleName = intent.getStringExtra("vehicle_name") ?: "Vehicle"
 
         driverNameText.text = driverName
         vehicleNameText.text = vehicleName
@@ -83,6 +83,7 @@ class CancelRideActivity : AppCompatActivity() {
             "cancelledBy" to "customer",
             "cancelReason" to reason,
             "cancelledAt" to System.currentTimeMillis(),
+            "customerNotified" to true,
             "driverNotified" to false,
             "hiddenFromCustomer" to false,
             "hiddenFromDriver" to false
@@ -95,7 +96,7 @@ class CancelRideActivity : AppCompatActivity() {
                 Toast.makeText(
                     this,
                     "Your ride has been successfully cancelled",
-                    Toast.LENGTH_SHORT
+                    Toast.LENGTH_LONG
                 ).show()
 
                 goToCustomerHome()
@@ -112,6 +113,7 @@ class CancelRideActivity : AppCompatActivity() {
     private fun goToCustomerHome() {
         val intent = Intent(this, CustomerHomeActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        intent.putExtra("user_role", "customer")
         startActivity(intent)
         finish()
     }

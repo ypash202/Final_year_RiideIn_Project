@@ -8,15 +8,17 @@ import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.riidein.app.R
+import com.riidein.app.utils.ProfileImageHelper
 import java.util.Locale
 
 class ChooseDriverActivity : AppCompatActivity() {
@@ -71,8 +73,8 @@ class ChooseDriverActivity : AppCompatActivity() {
     }
 
     private fun bindLocationText() {
-        fromMapText.text = shortenPlaceName(fromLocation, 18)
-        toMapText.text = shortenPlaceName(toLocation, 18)
+        fromMapText.text = shortenPlaceName(fromLocation)
+        toMapText.text = shortenPlaceName(toLocation)
     }
 
     private fun setupClicks() {
@@ -110,7 +112,13 @@ class ChooseDriverActivity : AppCompatActivity() {
                         name = document.getString("name") ?: "Driver",
                         vehicleType = driverVehicleType,
                         rawVehicleType = rawVehicleType,
-                        phone = document.getString("phone") ?: ""
+                        phone = document.getString("phone") ?: "",
+                        profileImageUri = document.getString("profileImageUri")
+                            ?: document.getString("profilePhotoUri")
+                            ?: document.getString("profilePhotoUrl")
+                            ?: document.getString("driverPhotoUrl")
+                            ?: "",
+                        profileImageBase64 = document.getString("profileImageBase64") ?: ""
                     )
                 }
 
@@ -148,16 +156,8 @@ class ChooseDriverActivity : AppCompatActivity() {
     private fun createDriverCard(driver: DriverOption, index: Int): LinearLayout {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = createRoundedDrawable(
-                color = "#000000",
-                radiusDp = 22f
-            )
-            setPadding(
-                dpToInt(16f),
-                dpToInt(16f),
-                dpToInt(16f),
-                dpToInt(16f)
-            )
+            background = createRoundedDrawable("#000000", 22f)
+            setPadding(dpToInt(16f), dpToInt(16f), dpToInt(16f), dpToInt(16f))
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -171,16 +171,17 @@ class ChooseDriverActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
         }
 
-        val avatarText = TextView(this).apply {
-            text = driver.name.firstOrNull()?.uppercase() ?: "D"
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            setTypeface(typeface, Typeface.BOLD)
-            background = createOvalDrawable("#4A4A4A")
-            layoutParams = LinearLayout.LayoutParams(
-                dpToInt(42f),
-                dpToInt(42f)
+        val avatarImage = ImageView(this).apply {
+            background = createOvalDrawable()
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            setPadding(dpToInt(2f), dpToInt(2f), dpToInt(2f), dpToInt(2f))
+            layoutParams = LinearLayout.LayoutParams(dpToInt(42f), dpToInt(42f))
+
+            ProfileImageHelper.loadProfileImage(
+                imageView = this,
+                base64Image = driver.profileImageBase64,
+                uriString = driver.profileImageUri,
+                fallbackRes = R.drawable.profile2
             )
         }
 
@@ -234,7 +235,7 @@ class ChooseDriverActivity : AppCompatActivity() {
         priceColumn.addView(priceText)
         priceColumn.addView(timeText)
 
-        topRow.addView(avatarText)
+        topRow.addView(avatarImage)
         topRow.addView(nameColumn)
         topRow.addView(priceColumn)
 
@@ -255,10 +256,7 @@ class ChooseDriverActivity : AppCompatActivity() {
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             setTypeface(typeface, Typeface.BOLD)
-            background = createRoundedDrawable(
-                color = "#00E676",
-                radiusDp = 22f
-            )
+            background = createRoundedDrawable("#00E676", 22f)
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 dpToInt(48f),
@@ -278,10 +276,7 @@ class ChooseDriverActivity : AppCompatActivity() {
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             setTypeface(typeface, Typeface.BOLD)
-            background = createRoundedDrawable(
-                color = "#FF2525",
-                radiusDp = 22f
-            )
+            background = createRoundedDrawable("#FF2525", 22f)
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 dpToInt(48f),
@@ -323,27 +318,38 @@ class ChooseDriverActivity : AppCompatActivity() {
             .addOnSuccessListener { userDoc ->
                 val customerName = userDoc.getString("name") ?: "Customer"
 
+                val customerProfileImageUri = userDoc.getString("profileImageUri")
+                    ?: userDoc.getString("profilePhotoUri")
+                    ?: userDoc.getString("profilePhotoUrl")
+                    ?: ""
+
+                val customerProfileImageBase64 =
+                    userDoc.getString("profileImageBase64") ?: ""
+
                 val request = hashMapOf<String, Any>(
                     "customerId" to currentUser.uid,
                     "customerName" to customerName,
+                    "customerProfileImageUri" to customerProfileImageUri,
+                    "customerProfileImageBase64" to customerProfileImageBase64,
+
                     "driverId" to driver.id,
                     "driverName" to driver.name,
+                    "driverProfileImageUri" to driver.profileImageUri,
+                    "driverProfileImageBase64" to driver.profileImageBase64,
 
-                    // serviceType = what customer selected: bike/cab/delivery
-                    // vehicleType = real driver vehicle: bike/cab
                     "serviceType" to normalizeServiceType(selectedVehicle),
                     "vehicleType" to driver.vehicleType,
-
                     "pickup" to fromLocation,
                     "drop" to toLocation,
                     "fare" to selectedPrice,
                     "status" to "pending",
                     "createdAt" to System.currentTimeMillis(),
-
                     "hiddenFromCustomer" to false,
                     "hiddenFromDriver" to false,
                     "customerNotified" to false,
-                    "driverNotified" to false
+                    "driverNotified" to false,
+                    "sosActive" to false,
+                    "driverNotifiedSos" to false
                 )
 
                 db.collection("ride_requests")
@@ -361,19 +367,11 @@ class ChooseDriverActivity : AppCompatActivity() {
                         )
                     }
                     .addOnFailureListener {
-                        Toast.makeText(
-                            this,
-                            "Failed to send request",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(this, "Failed to send request", Toast.LENGTH_SHORT).show()
                     }
             }
             .addOnFailureListener {
-                Toast.makeText(
-                    this,
-                    "Failed to load customer details",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, "Failed to load customer details", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -401,10 +399,9 @@ class ChooseDriverActivity : AppCompatActivity() {
                         intent.putExtra("request_id", requestId)
                         intent.putExtra("driver_id", selectedDriver.id)
                         intent.putExtra("driver_name", selectedDriver.name)
-                        intent.putExtra(
-                            "vehicle_name",
-                            buildVehicleTextForTracking(selectedDriver.vehicleType)
-                        )
+                        intent.putExtra("driver_profile_image_uri", selectedDriver.profileImageUri)
+                        intent.putExtra("driver_profile_image_base64", selectedDriver.profileImageBase64)
+                        intent.putExtra("vehicle_name", buildVehicleTextForTracking(selectedDriver.vehicleType))
                         intent.putExtra("selected_price", selectedPrice)
                         intent.putExtra("from_location", fromLocation)
                         intent.putExtra("to_location", toLocation)
@@ -449,32 +446,17 @@ class ChooseDriverActivity : AppCompatActivity() {
 
     private fun normalizeServiceType(serviceType: String): String {
         return when (serviceType.trim().lowercase(Locale.getDefault())) {
-            "moto" -> "bike"
-            "motorbike" -> "bike"
-            "motor-bike" -> "bike"
-            "bike" -> "bike"
-
-            "cab" -> "cab"
-            "car" -> "cab"
-            "taxi" -> "cab"
-
+            "moto", "motorbike", "motor-bike", "bike" -> "bike"
+            "cab", "car", "taxi" -> "cab"
             "delivery" -> "delivery"
-
             else -> serviceType.trim().lowercase(Locale.getDefault())
         }
     }
 
     private fun normalizeVehicleType(vehicleType: String): String {
         return when (vehicleType.trim().lowercase(Locale.getDefault())) {
-            "moto" -> "bike"
-            "motorbike" -> "bike"
-            "motor-bike" -> "bike"
-            "bike" -> "bike"
-
-            "cab" -> "cab"
-            "car" -> "cab"
-            "taxi" -> "cab"
-
+            "moto", "motorbike", "motor-bike", "bike" -> "bike"
+            "cab", "car", "taxi" -> "cab"
             else -> vehicleType.trim().lowercase(Locale.getDefault())
         }
     }
@@ -518,18 +500,10 @@ class ChooseDriverActivity : AppCompatActivity() {
         val textView = TextView(this).apply {
             text = message
             gravity = Gravity.CENTER
-            setTextColor(ContextCompat.getColor(this@ChooseDriverActivity, android.R.color.white))
+            setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            setPadding(
-                dpToInt(18f),
-                dpToInt(22f),
-                dpToInt(18f),
-                dpToInt(22f)
-            )
-            background = createRoundedDrawable(
-                color = "#000000",
-                radiusDp = 18f
-            )
+            setPadding(dpToInt(18f), dpToInt(22f), dpToInt(18f), dpToInt(22f))
+            background = createRoundedDrawable("#000000", 18f)
         }
 
         driverListContainer.addView(
@@ -541,7 +515,8 @@ class ChooseDriverActivity : AppCompatActivity() {
         )
     }
 
-    private fun shortenPlaceName(place: String, maxLength: Int): String {
+    private fun shortenPlaceName(place: String): String {
+        val maxLength = 18
         val cleanText = place.trim()
 
         return if (cleanText.length <= maxLength) {
@@ -551,21 +526,18 @@ class ChooseDriverActivity : AppCompatActivity() {
         }
     }
 
-    private fun createRoundedDrawable(
-        color: String,
-        radiusDp: Float
-    ): GradientDrawable {
+    private fun createRoundedDrawable(color: String, radiusDp: Float): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor(color))
+            setColor(color.toColorInt())
             cornerRadius = dpToInt(radiusDp).toFloat()
         }
     }
 
-    private fun createOvalDrawable(color: String): GradientDrawable {
+    private fun createOvalDrawable(): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.OVAL
-            setColor(Color.parseColor(color))
+            setColor("#4A4A4A".toColorInt())
         }
     }
 
@@ -589,5 +561,7 @@ private data class DriverOption(
     val name: String,
     val vehicleType: String,
     val rawVehicleType: String,
-    val phone: String
+    val phone: String,
+    val profileImageUri: String,
+    val profileImageBase64: String
 )

@@ -157,13 +157,20 @@ class SideMenuActivity : AppCompatActivity() {
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val name = document.getString("name") ?: "User"
+                    val profileImageUri = document.getString("profileImageUri") ?: ""
                     val driverPhotoUrl = document.getString("driverPhotoUrl") ?: ""
 
                     userName.text = name
 
-                    if (userRole == "driver" && driverPhotoUrl.isNotEmpty()) {
+                    val finalImageUri = when {
+                        profileImageUri.isNotBlank() -> profileImageUri
+                        userRole == "driver" && driverPhotoUrl.isNotBlank() -> driverPhotoUrl
+                        else -> ""
+                    }
+
+                    if (finalImageUri.isNotBlank()) {
                         try {
-                            profileImage.setImageURI(Uri.parse(driverPhotoUrl))
+                            profileImage.setImageURI(Uri.parse(finalImageUri))
                         } catch (e: Exception) {
                             profileImage.setImageResource(R.drawable.profile2)
                         }
@@ -181,7 +188,6 @@ class SideMenuActivity : AppCompatActivity() {
                 Toast.makeText(this, "Failed to load user data", Toast.LENGTH_SHORT).show()
             }
     }
-
     private fun highlightSelectedMenu(selected: String) {
         val selectedBg = ContextCompat.getDrawable(this, R.drawable.side_menu_selected_bg)
 
