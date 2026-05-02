@@ -20,6 +20,7 @@ class Settings : AppCompatActivity() {
         val backButton = findViewById<ImageButton>(R.id.backButton)
         val closeButton = findViewById<ImageButton>(R.id.closeButton)
         val itemMyAccount = findViewById<RelativeLayout>(R.id.itemMyAccount)
+        val itemSecurity = findViewById<RelativeLayout>(R.id.itemSecurity)
 
         backButton.setOnClickListener {
             openSideMenu()
@@ -31,6 +32,12 @@ class Settings : AppCompatActivity() {
 
         itemMyAccount.setOnClickListener {
             val intent = Intent(this, MyAccountActivity::class.java)
+            intent.putExtra("user_role", userRole)
+            startActivity(intent)
+        }
+
+        itemSecurity.setOnClickListener {
+            val intent = Intent(this, ChangePasswordActivity::class.java)
             intent.putExtra("user_role", userRole)
             startActivity(intent)
         }

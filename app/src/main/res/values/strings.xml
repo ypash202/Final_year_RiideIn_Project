@@ -264,6 +264,6 @@
     <string name="please_login_again">Please login again</string>
     <string name="failed_to_send_request">Failed to send request</string>
     <string name="failed_to_load_customer_details">Failed to load customer details</string>
-    
+
 </resources>
 
