@@ -2,6 +2,7 @@ package com.riidein.app.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -38,13 +39,36 @@ class LoginActivity : AppCompatActivity() {
             val email = emailEdit.text.toString().trim()
             val password = passwordEdit.text.toString().trim()
 
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
+            if (email.isEmpty()) {
+                emailEdit.error = "Enter your email"
+                emailEdit.requestFocus()
+                Toast.makeText(
+                    this,
+                    "Please enter your email address.",
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                Toast.makeText(this, "Invalid email format", Toast.LENGTH_SHORT).show()
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                emailEdit.error = "Enter a valid email"
+                emailEdit.requestFocus()
+                Toast.makeText(
+                    this,
+                    "Please enter a valid email address.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+
+            if (password.isEmpty()) {
+                passwordEdit.error = "Enter your password"
+                passwordEdit.requestFocus()
+                Toast.makeText(
+                    this,
+                    "Please enter your password.",
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
@@ -59,44 +83,90 @@ class LoginActivity : AppCompatActivity() {
                             db.collection("users").document(uid).get()
                                 .addOnSuccessListener { document ->
                                     if (document.exists()) {
-                                        val role = document.getString("role")?.trim()?.lowercase() ?: ""
-                                        val profileCompleted = document.getBoolean("profileCompleted") ?: false
+                                        val role = document.getString("role")
+                                            ?.trim()
+                                            ?.lowercase()
+                                            ?: ""
+
+                                        val profileCompleted =
+                                            document.getBoolean("profileCompleted") ?: false
 
                                         when (role) {
                                             "customer" -> {
-                                                Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-                                                startActivity(Intent(this, CustomerHomeActivity::class.java))
+                                                Toast.makeText(
+                                                    this,
+                                                    "Login Successful",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+
+                                                startActivity(
+                                                    Intent(
+                                                        this,
+                                                        CustomerHomeActivity::class.java
+                                                    )
+                                                )
                                                 finish()
                                             }
 
                                             "driver" -> {
                                                 if (profileCompleted) {
-                                                    Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-                                                    startActivity(Intent(this, DriverHomeActivity::class.java))
+                                                    Toast.makeText(
+                                                        this,
+                                                        "Login Successful",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+
+                                                    startActivity(
+                                                        Intent(
+                                                            this,
+                                                            DriverHomeActivity::class.java
+                                                        )
+                                                    )
                                                 } else {
-                                                    startActivity(Intent(this, DriverLicenceNumberActivity::class.java))
+                                                    startActivity(
+                                                        Intent(
+                                                            this,
+                                                            DriverLicenceNumberActivity::class.java
+                                                        )
+                                                    )
                                                 }
                                                 finish()
                                             }
 
                                             else -> {
-                                                Toast.makeText(this, "Unknown user role", Toast.LENGTH_LONG).show()
+                                                Toast.makeText(
+                                                    this,
+                                                    "Unable to identify your account type. Please contact support.",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
                                             }
                                         }
                                     } else {
-                                        Toast.makeText(this, "User data not found in Firestore", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(
+                                            this,
+                                            "Account details were not found. Please contact support.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
                                     }
                                 }
                                 .addOnFailureListener {
-                                    Toast.makeText(this, "Failed to fetch user role", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(
+                                        this,
+                                        "Unable to load your account details. Please try again.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
                                 }
                         } else {
-                            Toast.makeText(this, "User not found after login", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this,
+                                "Unable to sign in. Please try again.",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     } else {
                         Toast.makeText(
                             this,
-                            "Login Failed: ${task.exception?.message}",
+                            "Email or password is incorrect. Please check and try again.",
                             Toast.LENGTH_LONG
                         ).show()
                     }
