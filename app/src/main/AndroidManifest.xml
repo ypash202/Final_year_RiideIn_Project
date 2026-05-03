@@ -20,6 +20,8 @@
         <activity
             android:name=".activities.ChangePasswordActivity"
             android:exported="false" />
+
+
         <activity
             android:name=".activities.Settings"
             android:exported="false" />

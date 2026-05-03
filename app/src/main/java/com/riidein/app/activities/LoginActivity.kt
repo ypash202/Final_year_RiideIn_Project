@@ -177,6 +177,7 @@ class LoginActivity : AppCompatActivity() {
             startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
 
+
         signupLink.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }

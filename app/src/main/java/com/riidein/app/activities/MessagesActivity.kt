@@ -1,13 +1,12 @@
 package com.riidein.app.activities
 
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
-import android.util.TypedValue
 import android.view.Gravity
+import android.view.View
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -16,12 +15,19 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.net.toUri
+import androidx.appcompat.content.res.AppCompatResources
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import com.riidein.app.R
+import com.riidein.app.utils.ProfileImageHelper
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class MessagesActivity : AppCompatActivity() {
 
@@ -30,191 +36,299 @@ class MessagesActivity : AppCompatActivity() {
 
     private lateinit var backButton: ImageButton
     private lateinit var callButton: ImageButton
-    private lateinit var sendButton: ImageButton
-    private lateinit var messagesTitle: TextView
-    private lateinit var activeNowText: TextView
-    private lateinit var chatProfileImage: ImageView
-    private lateinit var chatScrollView: ScrollView
-    private lateinit var messagesContainer: LinearLayout
+    private lateinit var deleteButton: Button
+    private lateinit var titleText: TextView
+    private lateinit var emptyText: TextView
+    private lateinit var contentScrollView: ScrollView
+    private lateinit var contentContainer: LinearLayout
+    private lateinit var messageInputBar: LinearLayout
     private lateinit var messageEditText: EditText
+    private lateinit var sendButton: ImageButton
 
-    private var currentUserId: String = ""
-    private var currentUserRole: String = "customer"
-
+    private var userRole: String = "customer"
     private var requestId: String = ""
+    private var contactRole: String = ""
     private var contactUserId: String = ""
-    private var contactRole: String = "driver"
-    private var contactName: String = "User"
-    private var contactPhone: String = ""
+    private var contactName: String = ""
     private var contactPhotoUrl: String = ""
+    private var contactPhotoBase64: String = ""
     private var returnToRide: Boolean = false
 
-    private var messagesListener: ListenerRegistration? = null
+    private var selectedChatId: String = ""
+    private var selectedChatView: View? = null
+    private var messageListener: ListenerRegistration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_messages)
 
-        val firebaseUser = auth.currentUser
-        if (firebaseUser == null) {
-            Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-
-        currentUserId = firebaseUser.uid
-
         readIntentData()
         initViews()
-        setupClicks()
-        loadContactDetails()
-        listenForMessages()
+
+        backButton.setOnClickListener {
+            finish()
+        }
+
+        if (returnToRide && requestId.isNotBlank()) {
+            setupRideChatMode()
+        } else {
+            setupInboxMode()
+        }
     }
 
     private fun readIntentData() {
-        currentUserRole = intent.getStringExtra("user_role") ?: "customer"
+        userRole = intent.getStringExtra("user_role")
+            ?.trim()
+            ?.lowercase(Locale.getDefault())
+            ?: "customer"
+
         requestId = intent.getStringExtra("request_id") ?: ""
-        contactRole = intent.getStringExtra("contact_role") ?: "driver"
+
+        contactRole = intent.getStringExtra("contact_role")
+            ?.trim()
+            ?.lowercase(Locale.getDefault())
+            ?: ""
+
         contactUserId = intent.getStringExtra("contact_user_id") ?: ""
-        contactName = intent.getStringExtra("contact_name") ?: "User"
-        contactPhone = intent.getStringExtra("contact_phone") ?: ""
+        contactName = intent.getStringExtra("contact_name") ?: ""
         contactPhotoUrl = intent.getStringExtra("contact_photo_url") ?: ""
+        contactPhotoBase64 = intent.getStringExtra("contact_photo_base64") ?: ""
         returnToRide = intent.getBooleanExtra("return_to_ride", false)
     }
 
     private fun initViews() {
         backButton = findViewById(R.id.backButton)
         callButton = findViewById(R.id.callButton)
-        sendButton = findViewById(R.id.sendButton)
-        messagesTitle = findViewById(R.id.messagesTitle)
-        activeNowText = findViewById(R.id.activeNowText)
-        chatProfileImage = findViewById(R.id.chatProfileImage)
-        chatScrollView = findViewById(R.id.chatScrollView)
-        messagesContainer = findViewById(R.id.messagesContainer)
+        deleteButton = findViewById(R.id.deleteButton)
+        titleText = findViewById(R.id.titleText)
+        emptyText = findViewById(R.id.emptyText)
+        contentScrollView = findViewById(R.id.contentScrollView)
+        contentContainer = findViewById(R.id.contentContainer)
+        messageInputBar = findViewById(R.id.messageInputBar)
         messageEditText = findViewById(R.id.messageEditText)
-
-        messagesTitle.text = contactName
-        activeNowText.text = getString(R.string.active_now)
-
-        loadProfileImageIntoView(
-            imageView = chatProfileImage,
-            imageUrl = contactPhotoUrl,
-            fallbackRes = R.drawable.profile2
-        )
+        sendButton = findViewById(R.id.sendButton)
     }
 
-    private fun setupClicks() {
-        backButton.setOnClickListener {
-            if (returnToRide) {
-                finish()
-            } else {
-                openSideMenu()
-            }
+    private fun setupRideChatMode() {
+        titleText.text = if (contactName.isNotBlank()) {
+            contactName
+        } else if (userRole == "driver") {
+            "Customer"
+        } else {
+            "Driver"
         }
 
+        deleteButton.visibility = View.GONE
+        callButton.visibility = View.VISIBLE
+        messageInputBar.visibility = View.VISIBLE
+        emptyText.visibility = View.GONE
+        contentContainer.removeAllViews()
+
         callButton.setOnClickListener {
-            callContact()
+            openDialer()
         }
 
         sendButton.setOnClickListener {
-            sendMessage()
+            sendRideMessage()
         }
+
+        resolveContactFromRideRequest()
     }
 
-    private fun loadContactDetails() {
-        if (contactUserId.isBlank()) return
-
-        db.collection("users")
-            .document(contactUserId)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    contactName = document.getString("name") ?: contactName
-                    contactPhone = document.getString("phone") ?: contactPhone
-                    contactPhotoUrl = document.getString("driverPhotoUrl")
-                        ?: document.getString("profileImageUrl")
-                                ?: document.getString("profilePhotoUrl")
-                                ?: contactPhotoUrl
-
-                    messagesTitle.text = contactName
-
-                    loadProfileImageIntoView(
-                        imageView = chatProfileImage,
-                        imageUrl = contactPhotoUrl,
-                        fallbackRes = R.drawable.profile2
-                    )
-                }
-            }
-    }
-
-    private fun listenForMessages() {
+    private fun resolveContactFromRideRequest() {
         if (requestId.isBlank()) {
-            showSystemMessage(getString(R.string.chat_unavailable))
+            Toast.makeText(this, "Ride chat not found", Toast.LENGTH_SHORT).show()
             return
         }
 
-        messagesListener?.remove()
+        db.collection("ride_requests")
+            .document(requestId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    if (userRole == "customer") {
+                        val resolvedDriverId =
+                            document.getString("driverId")
+                                ?: document.getString("driver_id")
+                                ?: contactUserId
 
-        messagesListener = db.collection("ride_chats")
+                        val resolvedDriverName =
+                            document.getString("driverName")
+                                ?: document.getString("driver_name")
+                                ?: contactName
+
+                        if (resolvedDriverId.isNotBlank()) {
+                            contactUserId = resolvedDriverId
+                        }
+
+                        if (resolvedDriverName.isNotBlank()) {
+                            contactName = resolvedDriverName
+                            titleText.text = resolvedDriverName
+                        }
+
+                        contactRole = "driver"
+                    } else {
+                        val resolvedCustomerId =
+                            document.getString("customerId")
+                                ?: document.getString("customer_id")
+                                ?: document.getString("userId")
+                                ?: document.getString("user_id")
+                                ?: contactUserId
+
+                        val resolvedCustomerName =
+                            document.getString("customerName")
+                                ?: document.getString("customer_name")
+                                ?: document.getString("userName")
+                                ?: document.getString("user_name")
+                                ?: contactName
+
+                        if (resolvedCustomerId.isNotBlank()) {
+                            contactUserId = resolvedCustomerId
+                        }
+
+                        if (resolvedCustomerName.isNotBlank()) {
+                            contactName = resolvedCustomerName
+                            titleText.text = resolvedCustomerName
+                        }
+
+                        contactRole = "customer"
+                    }
+                }
+
+                createOrUpdateRideChatSummary()
+                listenToRideMessages()
+            }
+            .addOnFailureListener {
+                createOrUpdateRideChatSummary()
+                listenToRideMessages()
+            }
+    }
+
+    private fun createOrUpdateRideChatSummary() {
+        val currentUser = auth.currentUser ?: return
+
+        val chatData = hashMapOf<String, Any>(
+            "requestId" to requestId,
+            "lastMessage" to "Chat started",
+            "lastMessageTime" to FieldValue.serverTimestamp(),
+            "updatedAt" to FieldValue.serverTimestamp()
+        )
+
+        if (userRole == "customer") {
+            chatData["customerId"] = currentUser.uid
+            chatData["driverId"] = contactUserId
+            chatData["driverName"] = if (contactName.isNotBlank()) contactName else "Driver"
+            chatData["driverPhotoUrl"] = contactPhotoUrl
+            chatData["driverPhotoBase64"] = contactPhotoBase64
+        } else {
+            chatData["driverId"] = currentUser.uid
+            chatData["customerId"] = contactUserId
+            chatData["customerName"] = if (contactName.isNotBlank()) contactName else "Customer"
+            chatData["customerPhotoUrl"] = contactPhotoUrl
+            chatData["customerPhotoBase64"] = contactPhotoBase64
+        }
+
+        db.collection("ride_chats")
+            .document(requestId)
+            .set(chatData, SetOptions.merge())
+    }
+
+    private fun listenToRideMessages() {
+        messageListener?.remove()
+
+        messageListener = db.collection("ride_chats")
             .document(requestId)
             .collection("messages")
-            .orderBy("createdAt", Query.Direction.ASCENDING)
+            .orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    showSystemMessage("Failed to load messages.")
+                    Toast.makeText(this, "Failed to load chat", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
-                messagesContainer.removeAllViews()
+                contentContainer.removeAllViews()
 
                 if (snapshot == null || snapshot.isEmpty) {
-                    showSystemMessage(getString(R.string.start_conversation))
+                    emptyText.visibility = View.VISIBLE
+                    emptyText.text = "No messages yet.\n\nStart the conversation."
                     return@addSnapshotListener
                 }
 
+                emptyText.visibility = View.GONE
+
+                val currentUserId = auth.currentUser?.uid ?: ""
+
                 for (document in snapshot.documents) {
+                    val messageText = document.getString("messageText") ?: ""
+                    if (messageText.isBlank()) continue
+
                     val senderId = document.getString("senderId") ?: ""
-                    val message = document.getString("message") ?: ""
+                    val receiverId = document.getString("receiverId") ?: ""
                     val seenByReceiver = document.getBoolean("seenByReceiver") ?: false
+                    val timestamp = document.getTimestamp("timestamp")
+
                     val isMine = senderId == currentUserId
 
-                    val bubbleView = createMessageBubble(
-                        message = message,
+                    addMessageBubble(
+                        message = messageText,
                         isMine = isMine,
+                        timestamp = timestamp,
                         seenByReceiver = seenByReceiver
                     )
 
-                    messagesContainer.addView(bubbleView)
-
-                    if (!isMine && !seenByReceiver) {
+                    if (receiverId == currentUserId && !seenByReceiver) {
                         document.reference.update("seenByReceiver", true)
                     }
                 }
 
-                scrollToBottom()
+                contentScrollView.post {
+                    contentScrollView.fullScroll(ScrollView.FOCUS_DOWN)
+                }
             }
     }
 
-    private fun sendMessage() {
-        val text = messageEditText.text.toString().trim()
+    private fun sendRideMessage() {
+        val currentUser = auth.currentUser
 
-        if (text.isBlank()) {
-            Toast.makeText(this, "Please type a message", Toast.LENGTH_SHORT).show()
+        if (currentUser == null) {
+            Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (requestId.isBlank() || contactUserId.isBlank()) {
-            Toast.makeText(this, "Chat details missing", Toast.LENGTH_SHORT).show()
+        if (requestId.isBlank()) {
+            Toast.makeText(this, "Ride chat not found", Toast.LENGTH_SHORT).show()
             return
+        }
+
+        if (contactUserId.isBlank()) {
+            Toast.makeText(
+                this,
+                "Receiver not found. Please reopen the ride chat.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        val messageText = messageEditText.text.toString().trim()
+
+        if (messageText.isBlank()) {
+            Toast.makeText(this, "Type a message first", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val receiverRole = if (userRole == "driver") {
+            "customer"
+        } else {
+            "driver"
         }
 
         val messageData = hashMapOf<String, Any>(
-            "senderId" to currentUserId,
+            "senderId" to currentUser.uid,
+            "senderRole" to userRole,
             "receiverId" to contactUserId,
-            "senderRole" to currentUserRole,
-            "receiverRole" to contactRole,
-            "message" to text,
-            "createdAt" to System.currentTimeMillis(),
+            "receiverRole" to receiverRole,
+            "messageText" to messageText,
+            "timestamp" to FieldValue.serverTimestamp(),
             "seenByReceiver" to false
         )
 
@@ -223,206 +337,398 @@ class MessagesActivity : AppCompatActivity() {
             .collection("messages")
             .add(messageData)
             .addOnSuccessListener {
-                messageEditText.setText("")
+                updateChatLastMessage(messageText)
+                messageEditText.text.clear()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun createMessageBubble(
+    private fun updateChatLastMessage(messageText: String) {
+        db.collection("ride_chats")
+            .document(requestId)
+            .set(
+                mapOf(
+                    "lastMessage" to messageText,
+                    "lastMessageTime" to FieldValue.serverTimestamp(),
+                    "updatedAt" to FieldValue.serverTimestamp()
+                ),
+                SetOptions.merge()
+            )
+    }
+
+    private fun addMessageBubble(
         message: String,
         isMine: Boolean,
+        timestamp: Timestamp?,
         seenByReceiver: Boolean
-    ): LinearLayout {
-        val outerWrapper = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
+    ) {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = if (isMine) Gravity.END else Gravity.START
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                bottomMargin = dp(10f)
+                bottomMargin = dpToPx(12)
             }
         }
 
-        if (isMine) {
-            val sentWrapper = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.END
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
-
-            val bubble = TextView(this).apply {
-                text = message
-                setTextColor(Color.WHITE)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                setPadding(dp(14f), dp(10f), dp(14f), dp(10f))
-                background = roundedBg("#155E63", 18f)
-                minWidth = 0
-                minHeight = 0
-                includeFontPadding = false
-                maxWidth = (resources.displayMetrics.widthPixels * 0.72f).toInt()
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
-
-            val seenText = TextView(this).apply {
-                text = if (seenByReceiver) "Seen" else "Sent"
-                setTextColor(Color.parseColor("#8A95A5"))
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
-                includeFontPadding = false
-                setPadding(0, dp(4f), dp(4f), 0)
-                gravity = Gravity.END
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    gravity = Gravity.END
-                }
-            }
-
-            sentWrapper.addView(bubble)
-            sentWrapper.addView(seenText)
-            outerWrapper.addView(sentWrapper)
-
-        } else {
-            val rowWrapper = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.START or Gravity.BOTTOM
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
-
+        if (!isMine) {
             val avatar = ImageView(this).apply {
-                layoutParams = LinearLayout.LayoutParams(dp(34f), dp(34f)).apply {
-                    marginEnd = dp(8f)
+                layoutParams = LinearLayout.LayoutParams(dpToPx(34), dpToPx(34)).apply {
+                    marginEnd = dpToPx(8)
                 }
                 scaleType = ImageView.ScaleType.CENTER_CROP
-                background = ContextCompatHelper.getDrawable(this@MessagesActivity, R.drawable.profile_circle_border)
-                setPadding(dp(1f), dp(1f), dp(1f), dp(1f))
             }
 
-            loadProfileImageIntoView(
+            ProfileImageHelper.loadProfileImage(
                 imageView = avatar,
-                imageUrl = contactPhotoUrl,
-                fallbackRes = R.drawable.profile2
+                base64Image = contactPhotoBase64,
+                uriString = contactPhotoUrl,
+                fallbackRes = if (contactRole == "driver") R.drawable.profile2 else R.drawable.profile1
             )
 
-            val bubble = TextView(this).apply {
-                text = message
-                setTextColor(Color.WHITE)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                setPadding(dp(14f), dp(10f), dp(14f), dp(10f))
-                background = roundedBg("#11151C", 18f)
-                minWidth = 0
-                minHeight = 0
-                includeFontPadding = false
-                maxWidth = (resources.displayMetrics.widthPixels * 0.62f).toInt()
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
-
-            rowWrapper.addView(avatar)
-            rowWrapper.addView(bubble)
-            outerWrapper.addView(rowWrapper)
+            row.addView(avatar)
         }
 
-        return outerWrapper
-    }
+        val bubbleColumn = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = if (isMine) Gravity.END else Gravity.START
+        }
 
-    private fun showSystemMessage(message: String) {
-        messagesContainer.removeAllViews()
+        val bubble = TextView(this).apply {
+            background = if (isMine) {
+                AppCompatResources.getDrawable(this@MessagesActivity, R.drawable.chat_bubble_teal)
+            } else {
+                AppCompatResources.getDrawable(this@MessagesActivity, R.drawable.chat_bubble_dark)
+            }
 
-        val textView = TextView(this).apply {
+            setPadding(dpToPx(16), dpToPx(10), dpToPx(16), dpToPx(10))
             text = message
-            gravity = Gravity.CENTER
-            setTextColor(Color.parseColor("#8A95A5"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            setPadding(dp(16f), dp(28f), dp(16f), dp(28f))
+            setTextColor(resources.getColor(android.R.color.white, theme))
+            textSize = 14f
+            maxWidth = dpToPx(230)
         }
 
-        messagesContainer.addView(textView)
-    }
-
-    private fun callContact() {
-        if (contactPhone.isBlank()) {
-            Toast.makeText(this, "Phone number not available", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val intent = Intent(Intent.ACTION_DIAL).apply {
-            data = "tel:$contactPhone".toUri()
-        }
-
-        startActivity(intent)
-    }
-
-    private fun openSideMenu() {
-        startActivity(
-            Intent(this, SideMenuActivity::class.java).apply {
-                putExtra("user_role", currentUserRole)
-                putExtra("selected_menu", "messages")
+        val seenStatus = if (isMine) {
+            if (seenByReceiver) {
+                "✓✓ Seen"
+            } else {
+                "✓ Sent"
             }
-        )
-        finish()
+        } else {
+            ""
+        }
+
+        val timeText = TextView(this).apply {
+            text = if (isMine) {
+                "$seenStatus • ${formatTime(timestamp)}"
+            } else {
+                formatTime(timestamp)
+            }
+
+            setTextColor(resources.getColor(R.color.teal_200, theme))
+            textSize = 10f
+            alpha = 0.8f
+        }
+
+        bubbleColumn.addView(bubble)
+        bubbleColumn.addView(timeText)
+        row.addView(bubbleColumn)
+
+        contentContainer.addView(row)
     }
 
-    private fun loadProfileImageIntoView(
-        imageView: ImageView,
-        imageUrl: String,
-        fallbackRes: Int
-    ) {
-        if (imageUrl.isBlank()) {
-            imageView.setImageResource(fallbackRes)
+    private fun setupInboxMode() {
+        titleText.text = if (userRole == "driver") {
+            "Driver Messages"
+        } else {
+            "Customer Messages"
+        }
+
+        callButton.visibility = View.GONE
+        messageInputBar.visibility = View.GONE
+        deleteButton.visibility = View.GONE
+        selectedChatId = ""
+        selectedChatView = null
+
+        deleteButton.setOnClickListener {
+            deleteSelectedChat()
+        }
+
+        loadInboxChats()
+    }
+
+    private fun loadInboxChats() {
+        val currentUser = auth.currentUser
+
+        if (currentUser == null) {
+            showInboxMessage("Please login again to view your messages.")
             return
         }
 
-        try {
-            imageView.setImageURI(Uri.parse(imageUrl))
-        } catch (_: Exception) {
-            imageView.setImageResource(fallbackRes)
+        showInboxMessage("Loading messages...")
+
+        val queryField = if (userRole == "driver") {
+            "driverId"
+        } else {
+            "customerId"
+        }
+
+        db.collection("ride_chats")
+            .whereEqualTo(queryField, currentUser.uid)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                contentContainer.removeAllViews()
+
+                if (snapshot.isEmpty) {
+                    showInboxMessage(
+                        if (userRole == "driver") {
+                            "No customer messages yet.\n\nYour customer ride chats will appear here."
+                        } else {
+                            "No driver messages yet.\n\nYour driver ride chats will appear here."
+                        }
+                    )
+                    return@addOnSuccessListener
+                }
+
+                emptyText.visibility = View.GONE
+
+                val sortedChats = snapshot.documents.sortedByDescending {
+                    it.getTimestamp("lastMessageTime")?.toDate()?.time ?: 0L
+                }
+
+                for (document in sortedChats) {
+                    addInboxCard(document)
+                }
+            }
+            .addOnFailureListener {
+                showInboxMessage("Could not load messages.")
+            }
+    }
+
+    private fun addInboxCard(document: DocumentSnapshot) {
+        val chatRequestId = document.getString("requestId") ?: document.id
+
+        val personName = if (userRole == "driver") {
+            document.getString("customerName") ?: "Customer"
+        } else {
+            document.getString("driverName") ?: "Driver"
+        }
+
+        val personPhotoUrl = if (userRole == "driver") {
+            document.getString("customerPhotoUrl") ?: ""
+        } else {
+            document.getString("driverPhotoUrl") ?: ""
+        }
+
+        val personPhotoBase64 = if (userRole == "driver") {
+            document.getString("customerPhotoBase64") ?: ""
+        } else {
+            document.getString("driverPhotoBase64") ?: ""
+        }
+
+        val lastMessage = document.getString("lastMessage") ?: "No messages yet"
+        val lastMessageTime = document.getTimestamp("lastMessageTime")
+        val oppositeRole = if (userRole == "driver") "customer" else "driver"
+
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dpToPx(14), dpToPx(12), dpToPx(14), dpToPx(12))
+            background = AppCompatResources.getDrawable(
+                this@MessagesActivity,
+                R.drawable.chat_bubble_dark
+            )
+            isClickable = true
+            isFocusable = true
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                bottomMargin = dpToPx(12)
+            }
+        }
+
+        val avatar = ImageView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(dpToPx(52), dpToPx(52)).apply {
+                marginEnd = dpToPx(12)
+            }
+            scaleType = ImageView.ScaleType.CENTER_CROP
+        }
+
+        ProfileImageHelper.loadProfileImage(
+            imageView = avatar,
+            base64Image = personPhotoBase64,
+            uriString = personPhotoUrl,
+            fallbackRes = if (oppositeRole == "driver") R.drawable.profile2 else R.drawable.profile1
+        )
+
+        val textColumn = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+
+        val nameText = TextView(this).apply {
+            text = personName
+            setTextColor(resources.getColor(android.R.color.white, theme))
+            textSize = 16f
+            setTypeface(null, Typeface.BOLD)
+        }
+
+        val messageText = TextView(this).apply {
+            text = lastMessage
+            setTextColor(resources.getColor(android.R.color.darker_gray, theme))
+            textSize = 13f
+            maxLines = 1
+        }
+
+        val timeText = TextView(this).apply {
+            text = formatTime(lastMessageTime)
+            setTextColor(resources.getColor(R.color.teal_200, theme))
+            textSize = 11f
+        }
+
+        textColumn.addView(nameText)
+        textColumn.addView(messageText)
+        textColumn.addView(timeText)
+
+        card.addView(avatar)
+        card.addView(textColumn)
+
+        card.setOnClickListener {
+            val intent = Intent(this, MessagesActivity::class.java).apply {
+                putExtra("user_role", userRole)
+                putExtra("request_id", chatRequestId)
+                putExtra("contact_role", oppositeRole)
+                putExtra(
+                    "contact_user_id",
+                    if (userRole == "driver") {
+                        document.getString("customerId") ?: ""
+                    } else {
+                        document.getString("driverId") ?: ""
+                    }
+                )
+                putExtra("contact_name", personName)
+                putExtra("contact_photo_url", personPhotoUrl)
+                putExtra("contact_photo_base64", personPhotoBase64)
+                putExtra("return_to_ride", true)
+            }
+            startActivity(intent)
+        }
+
+        card.setOnLongClickListener {
+            selectInboxCard(chatRequestId, card)
+            true
+        }
+
+        contentContainer.addView(card)
+    }
+
+    private fun selectInboxCard(chatRequestId: String, card: LinearLayout) {
+        selectedChatView?.background = AppCompatResources.getDrawable(
+            this,
+            R.drawable.chat_bubble_dark
+        )
+
+        selectedChatId = chatRequestId
+        selectedChatView = card
+
+        card.background = AppCompatResources.getDrawable(
+            this,
+            R.drawable.side_menu_selected_bg
+        )
+
+        deleteButton.visibility = View.VISIBLE
+    }
+
+    private fun deleteSelectedChat() {
+        if (selectedChatId.isBlank()) {
+            Toast.makeText(this, "Long press a chat first", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        db.collection("ride_chats")
+            .document(selectedChatId)
+            .delete()
+            .addOnSuccessListener {
+                Toast.makeText(this, "Chat deleted", Toast.LENGTH_SHORT).show()
+                selectedChatId = ""
+                selectedChatView = null
+                deleteButton.visibility = View.GONE
+                loadInboxChats()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to delete chat", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun showInboxMessage(message: String) {
+        contentContainer.removeAllViews()
+        emptyText.visibility = View.VISIBLE
+        emptyText.text = message
+    }
+
+    private fun openDialer() {
+        if (contactUserId.isBlank()) {
+            openDialerWithNumber(getFallbackPhoneNumber())
+            return
+        }
+
+        db.collection("users")
+            .document(contactUserId)
+            .get()
+            .addOnSuccessListener { document ->
+                val phoneNumber = document.getString("phone")
+                    ?: document.getString("phoneNumber")
+                    ?: document.getString("mobile")
+                    ?: document.getString("mobileNumber")
+                    ?: getFallbackPhoneNumber()
+
+                openDialerWithNumber(phoneNumber)
+            }
+            .addOnFailureListener {
+                openDialerWithNumber(getFallbackPhoneNumber())
+            }
+    }
+
+    private fun openDialerWithNumber(phoneNumber: String) {
+        val dialIntent = Intent(Intent.ACTION_DIAL).apply {
+            data = Uri.parse("tel:$phoneNumber")
+        }
+        startActivity(dialIntent)
+    }
+
+    private fun getFallbackPhoneNumber(): String {
+        return if (contactRole == "driver") {
+            if (contactName.equals("Sulav", ignoreCase = true)) "9800000002" else "9800000001"
+        } else {
+            "9800000001"
         }
     }
 
-    private fun scrollToBottom() {
-        chatScrollView.post {
-            chatScrollView.fullScroll(ScrollView.FOCUS_DOWN)
-        }
+    private fun formatTime(timestamp: Timestamp?): String {
+        if (timestamp == null) return "Just now"
+
+        return SimpleDateFormat(
+            "dd MMM, h:mm a",
+            Locale.getDefault()
+        ).format(timestamp.toDate())
     }
 
-    private fun roundedBg(color: String, radiusDp: Float): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor(color))
-            cornerRadius = dp(radiusDp).toFloat()
-        }
-    }
-
-    private fun dp(value: Float): Int {
-        return TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            value,
-            resources.displayMetrics
-        ).toInt()
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        messagesListener?.remove()
-        messagesListener = null
+        messageListener?.remove()
+        messageListener = null
     }
-}
-
-private object ContextCompatHelper {
-    fun getDrawable(context: android.content.Context, drawableRes: Int) =
-        androidx.core.content.ContextCompat.getDrawable(context, drawableRes)
 }

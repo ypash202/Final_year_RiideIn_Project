@@ -265,5 +265,43 @@
     <string name="failed_to_send_request">Failed to send request</string>
     <string name="failed_to_load_customer_details">Failed to load customer details</string>
 
+    <string name="loading_messages">Loading messages...</string>
+    <string name="messages_list">Messages list</string>
+    <string name="driver_messages">Driver Messages</string>
+    <string name="customer_messages">Customer Messages</string>
+    <string name="login_again_messages">Please login again to view your messages.</string>
+    <string name="no_messages_yet">No messages yet</string>
+    <string name="active_ride">Active Ride</string>
+    <string name="recent_chats">Recent Chats</string>
+    <string name="could_not_load_messages">Could not load messages.</string>
+    <string name="failed_to_load_messages">Failed to load messages</string>
+    <string name="customer">Customer</string>
+    <string name="driver">Driver</string>
+
+    <string name="chat_status_time">%1$s • %2$s</string>
+    <string name="route_format">%1$s → %2$s</string>
+    <string name="from_location_format">From: %1$s</string>
+    <string name="to_location_format">To: %1$s</string>
+    <string name="no_customer_messages">No customer messages yet.&#10;&#10;Your ride conversations will appear here after you contact a customer.</string>
+    <string name="no_driver_messages">No driver messages yet.&#10;&#10;Your ride conversations will appear here after you contact a driver.</string>
+    <string name="just_now">Just now</string>
+    <string name="active">Active</string>
+    <string name="read_only_chat">This ride chat is read-only</string>
+    <string name="type_message_first">Type a message first</string>
+    <string name="chat_started">Chat started</string>
+    <string name="you">You</string>
+    <string name="login_again">Please login again</string>
+    <string name="message_saved_screen_only">Message saved only on this screen</string>
+    <string name="seen_time_format">✓✓ %1$s</string>
+
+    <string name="phone_uri_format">tel:%1$s</string>
+    <string name="chat_seen_fixed_time">✓✓ 3:00PM</string>
+    <string name="no_saved_ride_chats">No saved ride chats found yet.</string>
+
+    <string name="user">User</string>
+    <string name="rating_default">5.0</string>
+    <string name="side_menu_items">Side menu items</string>
+
+
 </resources>
 
